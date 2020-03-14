@@ -127,7 +127,7 @@ void InsertionSort(char **list, int n)	// in-place insertion sort
 			list[i + 1] = list[i];	// fill the previous word with current word
 			i--;					// move on to the next word
 		}
-		list[i + 1] = tmp;			// fill the word list[j] to list[i + 1]
+		list[i + 1] = tmp;			// fill the word list[j] at index i + 1
 	}
 }
 
@@ -144,43 +144,43 @@ void BubbleSort(char **list, int n)				// in-place bubble sort
 	}
 }
 
-void ShakerSort(char **list, int n)
+void ShakerSort(char **list, int n)	// in-place shaker sort
 {
-	int j;
-	int l = 0;
-	int r = n - 1;
+	int j;							// index
+	int l = 0;						// left bound
+	int r = n - 1;					// right bound
 
-	while (l <= r) {
-		for (j = r; j > l; j--) {
-			if (strcmp(list[j], list[j - 1]) < 0) {
-				swap(&list[j], &list[j - 1]);
+	while (l <= r) {				// while there are elements between bounds
+		for (j = r; j > l; j--) {	// move the smallest word to the left
+			if (strcmp(list[j], list[j - 1]) < 0) {	// if right word is smaller
+				swap(&list[j], &list[j - 1]);	// swap the right and left word
 			}
 		}
-		l++;
-		for (j = l; j < r; j++) {
-			if (strcmp(list[j], list[j + 1]) > 0) {
-				swap(&list[j], &list[j + 1]);
+		l++;						// close the bound on the left
+		for (j = l; j < r; j++) {	// move the biggest word to the right
+			if (strcmp(list[j], list[j + 1]) > 0) {	// if left word is bigger
+				swap(&list[j], &list[j + 1]);	// swap the right and left word
 			}
 		}
-		r--;
+		r--;						// close the bound on the right
 	}
 }
 
 void swap(char **a, char **b)	// swap two words
 {
-	char *tmp;
+	char *tmp;					// temporary char pointer
 
-	tmp = *a;
-	*a = *b;
-	*b = tmp;
+	tmp = *a;					// copy word at address a
+	*a = *b;					// change word at a to word at b
+	*b = tmp;					// change word at b to original word at a
 }
 
-void freeMemory(char **list, int n)
+void freeMemory(char **list, int n)	// free allocated memory
 {
-	int i;
+	int i;							// index
 
 	for (i = 0; i < n; i++) {
-		free(list[i]);
+		free(list[i]);				// free the memory that stores the words
 	}
-	free(list);
+	free(list);						// free the memory that stores the pointers
 }
