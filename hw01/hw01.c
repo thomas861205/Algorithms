@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#define METHOD 3					// algorithm index
+#define METHOD 2					// algorithm index
 									// 0: selection sort 1: insertion sort
 									// 2: bubble sort    3: shaker sort
 int N;								// input size
@@ -91,11 +91,11 @@ void copyArray(char **data, char **A)	// copy data to array A
 	}
 }
 
-double GetTime(void)					// get local time in seconds
+double GetTime(void)						// get local time in seconds
 {
-	struct timeval tv;					// variable to store time
+	struct timeval tv;						// variable to store time
 
-	gettimeofday(&tv, NULL);			// get local time
+	gettimeofday(&tv, NULL);				// get local time
 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
