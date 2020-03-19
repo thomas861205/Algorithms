@@ -1,6 +1,7 @@
 // EE3980 HW01 Quadratic Sorts
 // 105061110, 周柏宇
-// 2020/03/12
+// submitted on 2020/03/12
+// revised on 2020/03/19
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@ int R = 500;						// number of repetitions
 char algNames[][10] = {				// names of sorting algorithms available
 	"Selection", "Insertion", "Bubble", "Shaker"
 };
-void (*Sort[4])(char **list, int n);// to store pointer of sorting algorithms
+void (*Sort[4])(char **list, int n); // to store pointer of sorting algorithms
 
 void readInput(void);					// read all inputs
 void printArray(char **A);				// print the content of array A
@@ -36,7 +37,7 @@ int main(void)
 	
 	readInput();							// store inputs in array data
 	t = GetTime();							// get local time
-	A = (char **)malloc(sizeof(char *) * N);// allocate memory for copying
+	A = (char **)malloc(sizeof(char *) * N);	// allocate memory for copying
 	Sort[0] = SelectionSort;				// store function pointer in array
 	Sort[1] = InsertionSort;
 	Sort[2] = BubbleSort;
