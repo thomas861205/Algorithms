@@ -42,37 +42,37 @@ int main(void)
 		t = GetTime();			// get local time
 		for (j = 0; j < R_AVG; j++) {
 			for (k = 0; k < N; k++) {			// list all words
-				search[i](data[k], data, N);	// execute search algorithms
+				search[i](data[k], data, N);	// execute search algorithm
 			}
 		}
 		t = (GetTime() - t) / (R_AVG * N);		// calculate average CPU time
 		printf("%s search average CPU time: %.5e\n", algNames[i], t);
-												// print result
+										// print algorithm name and CPU time
 	}
-	WORSE_CASE = 1;								// testing for worse-case 
+	WORSE_CASE = 1;						// testing for worse-case
 	for (i = 0; i < 3; i++) {
-		t = GetTime();							// get local time
-		for (j = 0; j < R_AVG; j++) {
-			search[i](data[worseIdx[i]], data, N); // execute search algorithms
+		t = GetTime();					// get local time
+		for (j = 0; j < R_WORSE; j++) {
+			search[i](data[worseIdx[i]], data, N); // execute search algorithm
 		}
-		t = (GetTime() - t) / R_WORSE;			// calculate average CPU time
+		t = (GetTime() - t) / R_WORSE;	// calculate average CPU time
 		printf("%s search worse-case CPU time: %.5e\n", algNames[i], t);
-												// print result
+										// print algorithm name and CPU time
 	}
-	freeMemory(data, N);						// free array data
+	freeMemory(data, N);				// free array data
 
 	return 0;
 }
 
-void readInput(void)			// read all inputs
+void readInput(void)				// read all inputs
 {
-	int i;						// index
-	char tmpWord[1000];			// store input temporarily
+	int i;							// index
+	char tmpWord[1000];				// store input temporarily
 
-	scanf("%d", &N);			// input number of entries
+	scanf("%d", &N);				// input number of entries
 	data = (char **)malloc(sizeof(char *) * N);	// allocate memory for pointers
 	for (i = 0; i < N; i++) {
-		scanf("%s", tmpWord);	// input a word
+		scanf("%s", tmpWord);		// input a word
 		// allocate memory just enough to fit the word
 		data[i] = (char *)malloc(sizeof(char) * (strlen(tmpWord) + 1));
 		strcpy(data[i], tmpWord);	// transfer the input to array
