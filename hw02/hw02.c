@@ -1,6 +1,7 @@
 // EE3980 HW02 Random Data Searches
 // 105061110, 周柏宇
-// 2020/03/22
+// submitted on 2020/03/22
+// revised on 2020/03/25
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,8 +9,8 @@
 #include <sys/time.h>
 
 int N;				// input size
-int R_AVG = 500;	// number of repititions for testing average case
-int R_WORSE = 5000;	// number of repititions for testing worse-case
+int R_AVG = 500;	// number of repetitions for testing average case
+int R_WORSE = 5000;	// number of repetitions for testing worse-case
 int WORSE_CASE = 0;	// flag for testing worse-case
 char **data;		// input data
 int (*search[3])(char *word, char **list, int n);	// store function pointers
