@@ -11,7 +11,7 @@
 int N;								// input size
 char **data;						// input data
 char **A;							// array to be sorted
-int R = 1;						// number of repetitions
+int R = 500;						// number of repetitions
 char algNames[][10] = {				// names of sorting algorithms available
 	"Selection", "Insertion", "Bubble", "Shaker", "Heap"
 };
@@ -36,7 +36,7 @@ int main(void)
 	double t;								// local time
 	
 	readInput();							// store inputs in array data
-	// t = GetTime();							// get local time
+	t = GetTime();							// get local time
 	A = (char **)malloc(sizeof(char *) * N);	// allocate memory for copying
 	Sort[0] = SelectionSort;				// store function pointer in array
 	Sort[1] = InsertionSort;
@@ -50,10 +50,10 @@ int main(void)
 			printArray(A);					// print out the sorted array
 		}
 	}
-	// t = (GetTime() - t) / R;				// calculate the average run time
+	t = (GetTime() - t) / R;				// calculate the average run time
 	printf("%s Sort:\n", algNames[METHOD]);	// print out the algorithm name
 	printf("  N = %d\n", N);				// print out the input size
-	// printf("  CPU time = %.5e seconds\n", t);	// print out average CPU time
+	printf("  CPU time = %.5e seconds\n", t);	// print out average CPU time
 	freeMemory(data, N);					// free array data
 	free(A);								// free array A
 
@@ -93,14 +93,14 @@ void copyArray(char **data, char **A)	// copy data to array A
 	}
 }
 
-// double GetTime(void)						// get local time in seconds
-// {
-// 	struct timeval tv;						// variable to store time
+double GetTime(void)						// get local time in seconds
+{
+	struct timeval tv;						// variable to store time
 
-// 	gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL);				// get local time
 
-// 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
-// }
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+}
 
 
 void SelectionSort(char **list, int n)	// in-place selection sort
