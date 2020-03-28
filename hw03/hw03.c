@@ -25,8 +25,8 @@ void SelectionSort(char **list, int n);	// in-place selection sort
 void InsertionSort(char **list, int n);	// in-place insertion sort
 void BubbleSort(char **list, int n);	// in-place bubble sort
 void ShakerSort(char **list, int n);	// in-place shaker sort
-void HeapSort(char **list, int n);
-void Heapify(char **list, int i, int n);
+void HeapSort(char **list, int n);		// in-place heap sort
+void Heapify(char **list, int i, int n); // enforce max heap property
 void swap(char **a, char **b);			// swap two words
 void freeMemory(char **list, int n);	// free allocated memory
 
@@ -170,41 +170,42 @@ void ShakerSort(char **list, int n)	// in-place shaker sort
 	}
 }
 
-void HeapSort(char **list, int n)
+void HeapSort(char **list, int n)	// in-place heat sort
 {
-	int i;
+	int i;							// index
 
-	for (i = n / 2 - 1; i >= 0; i--) {
+	for (i = n / 2 - 1; i >= 0; i--) {	// make the list a max heap
 		Heapify(list, i, n);
 	}
 	for (i = n - 1; i > 0; i--) {
-		swap(&list[0], &list[i]);
-		Heapify(list, 0, i);
+		swap(&list[0], &list[i]);		// move maximum to the end
+		Heapify(list, 0, i);	// restore max heap property to unsorted part
 	}
 }
 
-void Heapify(char **list, int i, int n)
+void Heapify(char **list, int i, int n)	// enforce max heap property
 {
-	int j;
-	int done;
-	char *tmpWord;
+	int j;								// index
+	int done;							// loop flag
+	char *tmpWord;						// temporary word
 
-	j = 2 * (i + 1) - 1;
-	tmpWord = list[i];
+	j = 2 * (i + 1) - 1;				// initialize j to be lchild of i
+	tmpWord = list[i];					// copy root element
 	done = 0;
 	while ((j <= n - 1) && (!done)) {
+		// let list[j] to be the larger child
 		if ((j < n - 1) && (strcmp(list[j], list[j + 1]) < 0)) {
 			j++;
 		}
 		if (strcmp(tmpWord, list[j]) > 0) {
-			done = 1;
+			done = 1;					// exit if root is larger
 		}
 		else {
-			list[(j + 1) / 2 - 1] = list[j];
-			j = 2 * (j + 1) - 1;
+			list[(j + 1) / 2 - 1] = list[j]; // replace j's parent with list[j]
+			j = 2 * (j + 1) - 1;		// move j to its lchild
 		}
 	}
-	list[(j + 1) / 2 - 1] = tmpWord;
+	list[(j + 1) / 2 - 1] = tmpWord;	// move original root to proper place
 }
 
 void swap(char **a, char **b)	// swap two words
