@@ -6,16 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#define METHOD 4	// algorithm index
-					// 0: selection sort
-					// 1: insertion sort
-					// 2: bubble sort
-					// 3: shaker sort
-					// 4: heap sort
+#define METHOD 1
+
 int N;								// input size
 char **data;						// input data
 char **A;							// array to be sorted
-int R = 500;						// number of repetitions
+int R = 1;						// number of repetitions
 char algNames[][10] = {				// names of sorting algorithms available
 	"Selection", "Insertion", "Bubble", "Shaker", "Heap"
 };
@@ -29,8 +25,8 @@ void SelectionSort(char **list, int n);	// in-place selection sort
 void InsertionSort(char **list, int n);	// in-place insertion sort
 void BubbleSort(char **list, int n);	// in-place bubble sort
 void ShakerSort(char **list, int n);	// in-place shaker sort
-void HeapSort(char **list, int n);		// in-place heap sort
-void Heapify(char **list, int i, int n); // enforce max heap property
+void HeapSort(char **list, int n);
+void Heapify(char **list, int i, int n);
 void swap(char **a, char **b);			// swap two words
 void freeMemory(char **list, int n);	// free allocated memory
 
@@ -55,9 +51,9 @@ int main(void)
 		}
 	}
 	t = (GetTime() - t) / R;				// calculate the average run time
-	printf("%s Sort:\n", algNames[METHOD]);	// print out the algorithm name
-	printf("  N = %d\n", N);				// print out the input size
-	printf("  CPU time = %.5e seconds\n", t);	// print out average CPU time
+	// printf("%s Sort:\n", algNames[METHOD]);	// print out the algorithm name
+	// printf("  N = %d\n", N);				// print out the input size
+	// printf("  CPU time = %.5e seconds\n", t);	// print out average CPU time
 	freeMemory(data, N);					// free array data
 	free(A);								// free array A
 
@@ -83,8 +79,10 @@ void printArray(char **A)				// print the content of array A
 {
 	int i;								// index
 
+	printf("%d\n", N);
 	for (i = 0; i < N; i++) {
-		printf("%d %s\n", i + 1, A[i]);	// print the index and array content
+		// printf("%d %s\n", i + 1, A[i]);	// print the index and array content
+		printf("%s\n", A[i]);
 	}
 }
 
@@ -174,42 +172,41 @@ void ShakerSort(char **list, int n)	// in-place shaker sort
 	}
 }
 
-void HeapSort(char **list, int n)	// in-place heat sort
+void HeapSort(char **list, int n)
 {
-	int i;							// index
+	int i;
 
-	for (i = n / 2 - 1; i >= 0; i--) {	// make the list a max heap
+	for (i = n / 2 - 1; i >= 0; i--) {
 		Heapify(list, i, n);
 	}
 	for (i = n - 1; i > 0; i--) {
-		swap(&list[0], &list[i]);		// move maximum to the end
-		Heapify(list, 0, i);	// restore max heap property to unsorted part
+		swap(&list[0], &list[i]);
+		Heapify(list, 0, i);
 	}
 }
 
-void Heapify(char **list, int i, int n)	// enforce max heap property
+void Heapify(char **list, int i, int n)
 {
-	int j;								// index
-	int done;							// loop flag
-	char *tmpWord;						// temporary word
+	int j;
+	int done;
+	char *tmpWord;
 
-	j = 2 * (i + 1) - 1;				// initialize j to be lchild of i
-	tmpWord = list[i];					// copy root element
+	j = 2 * (i + 1) - 1;
+	tmpWord = list[i];
 	done = 0;
 	while ((j <= n - 1) && (!done)) {
-		// let list[j] to be the larger child
 		if ((j < n - 1) && (strcmp(list[j], list[j + 1]) < 0)) {
 			j++;
 		}
 		if (strcmp(tmpWord, list[j]) > 0) {
-			done = 1;					// exit if root is larger
+			done = 1;
 		}
 		else {
-			list[(j + 1) / 2 - 1] = list[j]; // replace j's parent with list[j]
-			j = 2 * (j + 1) - 1;		// move j to its lchild
+			list[(j + 1) / 2 - 1] = list[j];
+			j = 2 * (j + 1) - 1;
 		}
 	}
-	list[(j + 1) / 2 - 1] = tmpWord;	// move original root to proper place
+	list[(j + 1) / 2 - 1] = tmpWord;
 }
 
 void swap(char **a, char **b)	// swap two words
