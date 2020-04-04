@@ -9,7 +9,7 @@
 int V;	// number of vertices
 int E;	// number of edges
 int *G;	// set of edges
-int N = 1;	// number of repetitions
+int N = 100;	// number of repetitions
 int NS;	// number of disjoint connected sets
 
 void readGraph(void);	// read a network from stdin
@@ -21,24 +21,31 @@ double GetTime(void);	// get local time in seconds
 int main(void)
 {
 	int i;				// array index
-	int t0, t1, t2, t3;	// timestamp
+	double t0, t1, t2, t3;	// timestamp
 	int Ns1, Ns2, Ns3;	// number of disjoint connected sets found
 
 	readGraph();	// read a network from stdin
-	// t0 = GetTime();
+	t0 = GetTime();	// record time
 
 	for (i = 0; i < N; i++) Connect1();
-	// t1 = GetTime(); Ns1 = NS;
+	t1 = GetTime(); Ns1 = NS;	// record time and number of sets found
 
 	for (i = 0; i < N; i++) Connect2();
-	// t2 = GetTime(); Ns2 = NS;
+	t2 = GetTime(); Ns2 = NS;	// record time and number of sets found
 
 	for (i = 0; i < N; i++) Connect3();
-	// t3 = GetTime(); Ns3 = NS;
+	t3 = GetTime(); Ns3 = NS;	// record time and number of sets found
 
-	// printf("%f %f %f ", (t1 - t0) / N, (t2 - t1) / N, (t3 - t2) / N);
-	// printf("%d %d %d\n", Ns1, Ns2, Ns3);
-	free(G);
+	printf("Connect1:\n  ");	// print out the algorithm name
+	printf("CPU time = %.5e seconds", (t1 - t0) / N); // print out avg CPU time
+	printf(", NS = %d\n", Ns1);	// print out the number of sets found
+	printf("Connect2:\n  ");	// print out the algorithm name
+	printf("CPU time = %.5e seconds", (t2 - t1) / N); // print out avg CPU time
+	printf(", NS = %d\n", Ns2);	// print out the number of sets found
+	printf("Connect3:\n  ");	// print out the algorithm name
+	printf("CPU time = %.5e seconds", (t3 - t2) / N); // print out avg CPU time
+	printf(", NS = %d\n", Ns3);	// print out the number of sets found
+	free(G);	// free memory
 
 	return 0;
 }
@@ -57,14 +64,14 @@ void readGraph(void)	// read a network from stdin
 	}
 }
 
-// double GetTime(void)						// get local time in seconds
-// {
-// 	struct timeval tv;						// variable to store time
+double GetTime(void)						// get local time in seconds
+{
+	struct timeval tv;						// variable to store time
 
-// 	gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL);				// get local time
 
-// 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
-// }
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+}
 
 void Connect1(void)
 {
