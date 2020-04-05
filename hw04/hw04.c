@@ -20,7 +20,7 @@ double GetTime(void);	// get local time in seconds
 
 int main(void)
 {
-	int i;				// array index
+	int i;				// loop index
 	double t0, t1, t2, t3;	// timestamp
 	int Ns1, Ns2, Ns3;	// number of disjoint connected sets found
 
@@ -73,7 +73,7 @@ double GetTime(void)						// get local time in seconds
 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
-void Connect1(void)
+void Connect1(void)	// find disjoint connected sets for a network, method 1
 {
 	int i;		// loop index
 	int vi, vj;	// vertices
@@ -103,7 +103,7 @@ void Connect1(void)
 	free(R);	// free memory
 }
 
-void Connect2(void)
+void Connect2(void)	// find disjoint connected sets for a network, method 2
 {
 	int i;		// loop index
 	int vi, vj;	// vertices
@@ -122,7 +122,7 @@ void Connect2(void)
 		while (S[vj] >= 0) vj = S[vj];	// find the root for vj
 		if (vi != vj) {	// if the roots are different
 			NS--;		// decrease the number of disjoint sets found by 1
-			temp = S[vi] + S[vj];	// (number of elements of two trees) x -1
+			temp = S[vi] + S[vj];	// (number of elements of two sets) x -1
 			if (S[vi] > S[vj]) {	// vi has fewer elements
 				S[vi] = vj;			// connect vi to vj
 				S[vj] = temp;		// update the number of elements
@@ -142,7 +142,7 @@ void Connect2(void)
 	free(R);	// free memory
 }
 
-void Connect3(void)
+void Connect3(void)	// find disjoint connected sets for a network, method 3
 {
 	int i;		// loop index
 	int vi, vj;	// vertices
@@ -162,20 +162,20 @@ void Connect3(void)
 		ri = vi;				// initiate root for vi to be vi
 		rj = vj;				// initiate root for vj to be vj
 		while (S[ri] >= 0) ri = S[ri];	// find the root for vi
-		while (vi != ri) {		// update the root for vi to be ri
+		while (vi != ri) {	// collapse the elements on the path
 			s = S[vi];
 			S[vi] = ri;
 			vi = s;
 		}
 		while (S[rj] >= 0) rj = S[rj];	// find the root for vj
-		while (vj != rj) {		// update the root for vj to be rj
+		while (vj != rj) {	// collapse the elements on the path
 			s = S[vj];
 			S[vj] = rj;
 			vj = s;
 		}
 		if (ri != rj) {	// if the roots are different
 			NS--;		// decrease the number of disjoint sets found by 1
-			temp = S[ri] + S[rj];	// (number of elements of two trees) x -1
+			temp = S[ri] + S[rj];	// (number of elements of two sets) x -1
 			if (S[ri] > S[rj]) {	// ri has fewer elements
 				S[ri] = rj;			// connect ri to rj
 				S[rj] = temp;		// update the number of elements
