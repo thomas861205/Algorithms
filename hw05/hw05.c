@@ -112,7 +112,7 @@ double MaxSubArrayBF(int *low, int *high)
 	for (j = 0; j < N; j++) { // try all possible subarrays
 		for (k = j; k < N; k++) {
 			sum = 0;
-			for (i = j; i <= k; i++) { // summation for data[j:k].change
+			for (i = j; i <= k; i++) { // summation for data[j: k].change
 				sum += data[i].change;
 			}
 			if (sum > max) { // record the maximal sum and range
@@ -168,7 +168,7 @@ double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high)
 	lsum = 0; // initialize for lower half
 	*low = mid;
 	sum = 0;
-	// find low s.t. sum of A[low:mid].change is maximized
+	// find low s.t. sum of A[low: mid].change is maximized
 	for (i = mid; i >= begin; i--) {
 		sum += data[i].change;
 		if (sum > lsum) { // record if larger
@@ -180,7 +180,7 @@ double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high)
 	rsum = 0; // initialize for upper half
 	*high = mid + 1;
 	sum = 0;
-	// find high s.t. sum of A[mid+1:high].change is maximized
+	// find high s.t. sum of A[mid+1: high].change is maximized
 	for (i = mid + 1; i <= end; i++) {
 		sum += data[i].change;
 		if (sum > rsum) { // record if larger
