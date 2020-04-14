@@ -48,7 +48,7 @@ int main(void)
 	}
 	t2 = GetTime();	// record time
 
-	// convert the index to the ctaul buy/sell date
+	// convert the index to the actual buy/sell date
 	bDayBF = &data[(lowBF > 0) * (lowBF - 1)];
 	sDayBF = &data[highBF];
 	bDayDnC = &data[(lowDnC > 0) * (lowDnC - 1)];
