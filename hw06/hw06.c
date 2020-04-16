@@ -14,7 +14,7 @@ typedef struct sSTKprice {
 
 int N;				// input size
 int R_BF = 1;		// repetition for brute-force approach
-int R_DnC = 500;	// repetition for divide and conquer approach
+int R_DnC = 1;	// repetition for divide and conquer approach
 STKprice *data;		// array of stock info
 
 void readData(void);	// read stock history
@@ -25,17 +25,20 @@ double MaxSubArrayBF(int *low, int *high);
 double MaxSubArray(int begin, int end, int *low, int *high);
 // find the maximum earning for one-buy-one-sell stock trading (cross boundary)
 double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high);
-double MaxDiffSubArray(int *low, int *high);
+double MaxSubArrayDiff(int *low, int *high);
 
 int main(void)
 {
 	int i;				 // loop index
 	int lowBF, highBF;	 // lower/higher index of the subarray (brute-force)
 	int lowDnC, highDnC; // lower/higher index of the subarray (divide&conquer)
+	int lowDiff, highDiff;
 	STKprice *bDayBF, *sDayBF;	  // buy/sell day (brute-force)
 	STKprice *bDayDnC, *sDayDnC;  // buy/sell day (divide&conquer)
+	STKprice *bDayDiff, *sDayDiff;
 	double earningBF, earningDnC; // earning by brute-force and divide&conquer
-	double t0, t1, t2;	 // time stamp
+	double earningDiff;
+	double t0=0, t1=0, t2=0;	 // time stamp
 
 	readData();		// read stock history
 
@@ -48,27 +51,37 @@ int main(void)
 		earningDnC = MaxSubArray(0, N - 1, &lowDnC, &highDnC);
 	}
 	// t2 = GetTime();	// record time
+	for (i = 0; i < R_DnC; i++) {
+		earningDiff = MaxSubArrayDiff(&lowDiff, &highDiff);
+	}
 
 	// convert the index to the actual buy/sell date
 	bDayBF = &data[(lowBF > 0) * (lowBF - 1)];
 	sDayBF = &data[highBF];
 	bDayDnC = &data[(lowDnC > 0) * (lowDnC - 1)];
 	sDayDnC = &data[highDnC];
+	bDayDiff = &data[lowDiff];
+	sDayDiff = &data[highDiff];
 	// print input size, buy/sell date and price and earning of both approaches
 	printf("N = %d\n", N);
-	// printf("Brute-force approach: time %.5e s\n", (t1 - t0) / R_BF);
+	printf("Brute-force approach: time %.5e s\n", (t1 - t0) / R_BF);
 	printf("  Buy: %d/%d/%d", bDayBF->year, bDayBF->month, bDayBF->day);
 	printf(" at %g\n", bDayBF->price);
 	printf("  Sell: %d/%d/%d", sDayBF->year, sDayBF->month, sDayBF->day);
 	printf(" at %g\n", sDayBF->price);
 	printf("  Earning: %g per share.\n", earningBF);
-	// printf("Divide and Conquer: time %.5e s\n", (t2 - t1) / R_DnC);
+	printf("Divide and Conquer: time %.5e s\n", (t2 - t1) / R_DnC);
 	printf("  Buy: %d/%d/%d", bDayDnC->year, bDayDnC->month, bDayDnC->day);
 	printf(" at %g\n", bDayDnC->price);
 	printf("  Sell: %d/%d/%d", sDayDnC->year, sDayDnC->month, sDayDnC->day);
 	printf(" at %g\n", sDayDnC->price);
 	printf("  Earning: %g per share.\n", earningDnC);
-
+	printf("Modified brute-force approach: time ? s\n");
+	printf("  Buy: %d/%d/%d", bDayDiff->year, bDayDiff->month, bDayDiff->day);
+	printf(" at %g\n", bDayDiff->price);
+	printf("  Sell: %d/%d/%d", sDayDiff->year, sDayDiff->month, sDayDiff->day);
+	printf(" at %g\n", sDayDiff->price);
+	printf("  Earning: %g per share.\n", earningDiff);
 	free(data);	// release allocated memory
 
 	return 0;
@@ -190,4 +203,27 @@ double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high)
 	}
 
 	return lsum + rsum; // overall sum
+}
+
+double MaxSubArrayDiff(int *low, int *high)
+{
+	int i, j, k;	// loop indices
+	double max;		// maximal sum of subarray
+	double diff;		// diff of subarray
+
+	max = 0; // initialize
+	*low = 0;
+	*high = N - 1;
+	for (j = 0; j < N; j++) { // try all possible subarrays
+		for (k = j; k < N; k++) {
+			diff = data[k].price - data[j].price;
+			if (diff > max) { // record the maximal diff and range
+				max = diff;
+				*low = j;
+				*high = k;
+			}
+		}
+	}
+
+	return max;
 }
