@@ -14,7 +14,8 @@ typedef struct sSTKprice {
 
 int N;				// input size
 int R_BF = 1;		// repetition for brute-force approach
-int R_DnC = 1;	// repetition for divide and conquer approach
+int R_DnC = 1000;	// repetition for divide and conquer approach
+int R_hw6 = 500;
 STKprice *data;		// array of stock info
 
 void readData(void);	// read stock history
@@ -25,20 +26,25 @@ double MaxSubArrayBF(int *low, int *high);
 double MaxSubArray(int begin, int end, int *low, int *high);
 // find the maximum earning for one-buy-one-sell stock trading (cross boundary)
 double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high);
-double MaxSubArrayDiff(int *low, int *high);
+// find the maximum earning for one-buy-one-sell stock trading (modified BF)
+double MaxSubArrayMBF(int *low, int *high);
+// find the maximum earning for one-buy-one-sell stock trading (Kadane's algo.)
+double MaxSubArrayKadane(int *low, int *high);
 
 int main(void)
 {
 	int i;				 // loop index
 	int lowBF, highBF;	 // lower/higher index of the subarray (brute-force)
 	int lowDnC, highDnC; // lower/higher index of the subarray (divide&conquer)
-	int lowDiff, highDiff;
-	STKprice *bDayBF, *sDayBF;	  // buy/sell day (brute-force)
-	STKprice *bDayDnC, *sDayDnC;  // buy/sell day (divide&conquer)
-	STKprice *bDayDiff, *sDayDiff;
+	int lowMBF, highMBF; // lower/higher index of the subarray (modified BF)
+	int lowKadane, highKadane; // lower/higher index of the subarray (Kadane's)
+	STKprice *bDayBF, *sDayBF; // buy/sell day (brute-force)
+	STKprice *bDayDnC, *sDayDnC; // buy/sell day (divide&conquer)
+	STKprice *bDayMBF, *sDayMBF; // buy/sell day (modified BF)
+	STKprice *bDayKadane, *sDayKadane; // buy/sell day (Kadane's)
 	double earningBF, earningDnC; // earning by brute-force and divide&conquer
-	double earningDiff;
-	double t0=0, t1=0, t2=0;	 // time stamp
+	double earningMBF, earningKadane; // earning by modified BF and Kadane's
+	double t0, t1, t2, t3, t4;	 // time stamp
 
 	readData();		// read stock history
 
@@ -51,17 +57,23 @@ int main(void)
 		earningDnC = MaxSubArray(0, N - 1, &lowDnC, &highDnC);
 	}
 	// t2 = GetTime();	// record time
-	for (i = 0; i < R_DnC; i++) {
-		earningDiff = MaxSubArrayDiff(&lowDiff, &highDiff);
+	for (i = 0; i < R_hw6; i++) {
+		earningMBF = MaxSubArrayMBF(&lowMBF, &highMBF);
 	}
-
+	// t3 = GetTime();
+	for (i = 0; i < R_hw6; i++) {
+		earningKadane = MaxSubArrayKadane(&lowKadane, &highKadane);
+	}
+	// t4 = GetTime();
 	// convert the index to the actual buy/sell date
 	bDayBF = &data[(lowBF > 0) * (lowBF - 1)];
 	sDayBF = &data[highBF];
 	bDayDnC = &data[(lowDnC > 0) * (lowDnC - 1)];
 	sDayDnC = &data[highDnC];
-	bDayDiff = &data[lowDiff];
-	sDayDiff = &data[highDiff];
+	bDayMBF = &data[lowMBF];
+	sDayMBF = &data[highMBF];
+	bDayKadane = &data[(lowKadane > 0) * (lowKadane - 1)];
+	sDayKadane = &data[highKadane];
 	// print input size, buy/sell date and price and earning of both approaches
 	printf("N = %d\n", N);
 	printf("Brute-force approach: time %.5e s\n", (t1 - t0) / R_BF);
@@ -70,18 +82,28 @@ int main(void)
 	printf("  Sell: %d/%d/%d", sDayBF->year, sDayBF->month, sDayBF->day);
 	printf(" at %g\n", sDayBF->price);
 	printf("  Earning: %g per share.\n", earningBF);
+
 	printf("Divide and Conquer: time %.5e s\n", (t2 - t1) / R_DnC);
 	printf("  Buy: %d/%d/%d", bDayDnC->year, bDayDnC->month, bDayDnC->day);
 	printf(" at %g\n", bDayDnC->price);
 	printf("  Sell: %d/%d/%d", sDayDnC->year, sDayDnC->month, sDayDnC->day);
 	printf(" at %g\n", sDayDnC->price);
 	printf("  Earning: %g per share.\n", earningDnC);
-	printf("Modified brute-force approach: time ? s\n");
-	printf("  Buy: %d/%d/%d", bDayDiff->year, bDayDiff->month, bDayDiff->day);
-	printf(" at %g\n", bDayDiff->price);
-	printf("  Sell: %d/%d/%d", sDayDiff->year, sDayDiff->month, sDayDiff->day);
-	printf(" at %g\n", sDayDiff->price);
-	printf("  Earning: %g per share.\n", earningDiff);
+
+	printf("Modified brute-force approach: time %.5e s\n", (t3 - t2) / R_hw6);
+	printf("  Buy: %d/%d/%d", bDayMBF->year, bDayMBF->month, bDayMBF->day);
+	printf(" at %g\n", bDayMBF->price);
+	printf("  Sell: %d/%d/%d", sDayMBF->year, sDayMBF->month, sDayMBF->day);
+	printf(" at %g\n", sDayMBF->price);
+	printf("  Earning: %g per share.\n", earningMBF);
+
+	printf("Kadane's algorithm: time %.5f s\n", (t4 - t3) / R_hw6);
+	printf("  Buy: %d/%d/%d", bDayKadane->year, bDayKadane->month, bDayKadane->day);
+	printf(" at %g\n", bDayKadane->price);
+	printf("  Sell: %d/%d/%d", sDayKadane->year, sDayKadane->month, sDayKadane->day);
+	printf(" at %g\n", sDayKadane->price);
+	printf("  Earning: %g per share.\n", earningKadane);
+
 	free(data);	// release allocated memory
 
 	return 0;
@@ -205,7 +227,8 @@ double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high)
 	return lsum + rsum; // overall sum
 }
 
-double MaxSubArrayDiff(int *low, int *high)
+// find the maximum earning for one-buy-one-sell stock trading (modified BF)
+double MaxSubArrayMBF(int *low, int *high)
 {
 	int i, j, k;	// loop indices
 	double max;		// maximal sum of subarray
@@ -222,6 +245,35 @@ double MaxSubArrayDiff(int *low, int *high)
 				*low = j;
 				*high = k;
 			}
+		}
+	}
+
+	return max;
+}
+
+// find the maximum earning for one-buy-one-sell stock trading (Kadane's algo.)
+double MaxSubArrayKadane(int *low, int *high)
+{
+	int i; // loop index
+	int checkpoint; // temporary lower index
+	double max; // current maximum sum
+	double sum; // current sum
+
+	*low = 0; // initialize
+	*high = N - 1;
+	checkpoint = 0;
+	max = -1e10;
+	sum = 0;
+	for (i = 0; i < N; i++) {
+		sum += data[i].change; // add the value to sum
+		if (sum > max) { // record maximum up till now
+			max = sum;
+			*low = checkpoint; // record the lower index
+			*high = i; // record the higher index
+		}
+		if (sum < 0) { // current sum < 0
+			sum = 0; // resest
+			checkpoint = i + 1; // start adding from the next index
 		}
 	}
 
