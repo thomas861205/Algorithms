@@ -230,17 +230,17 @@ double MaxSubArrayXB(int begin, int mid, int end, int *low, int *high)
 // find the maximum earning for one-buy-one-sell stock trading (modified BF)
 double MaxSubArrayMBF(int *low, int *high)
 {
-	int j, k;	// loop indices
-	double max;		// maximal sum of subarray
-	double diff;	// difference of subarray
+	int j, k; // loop indices
+	double max; // maximal difference
+	double diff; // difference
 
 	max = 0; // initialize
 	*low = 0;
 	*high = N - 1;
-	for (j = 0; j < N; j++) { // try all possible subarrays
+	for (j = 0; j < N; j++) { // try all buy/sell dates
 		for (k = j; k < N; k++) { // calculate the difference
 			diff = data[k].price - data[j].price;
-			if (diff > max) { // record the maximal difference and range
+			if (diff > max) { // record the maximum and range
 				max = diff;
 				*low = j;
 				*high = k;
@@ -262,11 +262,11 @@ double MaxSubArrayKadane(int *low, int *high)
 	*low = 0; // initialize
 	*high = N - 1;
 	checkpoint = 0;
-	max = -1e10;
+	max = 0;
 	sum = 0;
 	for (i = 0; i < N; i++) {
 		sum += data[i].change; // add the value to sum
-		if (sum > max) { // record maximum up till now
+		if (sum > max) { // record the maximum
 			max = sum;
 			*low = checkpoint; // record the lower index
 			*high = i; // record the higher index
