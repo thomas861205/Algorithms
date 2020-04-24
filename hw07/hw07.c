@@ -4,8 +4,7 @@
 
 // potential improvement
 // space:
-// adjacent matrix -> link list
-// graphT
+// adjacent matrix -> link list ??
 // SCCs
 // 
 // time: other sorting algorithm
@@ -31,24 +30,18 @@ int n_names;
 int n_links;
 int n_SCCs;
 char **names;
-int **adj_matrix;
-// int **graphT; // transpose graph
+int **adj_mat;
 int *visited;
 int *f;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
-// Node *SCCs;
 
 void readData();
 int nameToIndex(char *name);
-int G(int i, int j);
-int G_T(int i, int j);
 void SCC();
-// void DFS_Call(int **graph, int *order, int phase);
-// void DFS_d(int **graph, int *order, int v);
-void DFS_Call(int (*func_ptr)(int, int), int *order, int phase);
-void DFS_d(int (*func_ptr)(int, int), int *order, int v);
+void DFS_Call(int **adj_mat, int *order, int phase);
+void DFS_d(int **adj_mat, int *order, int v, int phase);
 void InsertionSort(int *keys, int *values, int low, int high);
 void MergeSort(int *keys, int *values, int low, int high);
 void Merge(int *keys, int *values, int low, int mid, int high);
@@ -85,7 +78,7 @@ int main(void)
 
 void readData()
 {
-	int i, j, k;
+	int i, j;
 	char tmp[20], tmp2[20], tmp3[20];
 
 	scanf("%d", &n_names);
@@ -94,39 +87,21 @@ void readData()
 	for (i = 0; i < n_names; i++) {
 		scanf("%s", &tmp);
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
-		// names[i] = (char *)malloc(sizeof(char) * (strlen(tmp) + 1)); // test c0.dat
 		strcpy(names[i], tmp);
 	}
 
-	adj_matrix = (int **)malloc(sizeof(int *) * n_names);
-	// graphT = (int **)malloc(sizeof(int *) * n_names);
+	adj_mat = (int **)malloc(sizeof(int *) * n_names);
 	for (i = 0; i < n_names; i++) {
-		adj_matrix[i] = (int *)malloc(sizeof(int) * n_names);
-		// graphT[i] = (int *)malloc(sizeof(int) * n_names);
+		adj_mat[i] = (int *)malloc(sizeof(int) * n_names);
 		for (j = 0; j < n_names; j++) {
-			adj_matrix[i][j] = 0;
-			// graphT[i][j] = 0;
+			adj_mat[i][j] = 0;
 		}
 	}
 
 	for (i = 0; i < n_links; i++) {
 		scanf("%s %s %s", &tmp, &tmp2, &tmp3);
-		// printf("%d -> %d\n", nameToIndex(tmp), nameToIndex(tmp3));
-		j = nameToIndex(tmp);
-		k = nameToIndex(tmp3);
-		adj_matrix[j][k] = 1;
-		// graphT[k][j] = 1;
+		adj_mat[nameToIndex(tmp)][nameToIndex(tmp3)] = 1;
 	}
-
-	// for (i = 0; i < n_names; i++) {
-	// 	for (j = 0; j < n_names; j++) printf("%d ", graph[i][j]);
-	// 	printf("\n");
-	// }
-	// printf("\n");
-	// for (i = 0; i < n_names; i++) {
-	// 	for (j = 0; j < n_names; j++) printf("%d ", graphT[i][j]);
-	// 	printf("\n");
-	// }
 }
 
 int nameToIndex(char *name)
@@ -139,43 +114,27 @@ int nameToIndex(char *name)
 	return -1;
 }
 
-int G(int i, int j)
-{
-	return adj_matrix[i][j];
-}
-
-int G_T(int i, int j)
-{
-	return adj_matrix[j][i];
-}
-
 void SCC()
 {
 	int i;
 	int *keys;
 
 	keys = (int *)malloc(sizeof(int) * n_names);
-	for (i = 0; i < n_names; i++) {
-		keys[i] = i;
-		// printf("%s ", names[keys[i]]);
-	}
-	// printf("\n");
+	for (i = 0; i < n_names; i++) keys[i] = i;
 
-	DFS_Call(G, keys, 1);
-	// InsertionSort(keys, f);
-	MergeSort(keys, f, 0, n_names - 1);
+	DFS_Call(adj_mat, keys, 0);
+	InsertionSort(keys, f, 0, n_names - 1);
+	// MergeSort(keys, f, 0, n_names - 1);
 
 	// for (i = 0; i < n_names; i++) {
 	// 	printf("%s ", names[keys[i]]);
 	// }
 	// printf("\n");
 
-	// DFS_Call(graphT, keys, 2);
-	DFS_Call(G_T, keys, 2);
+	DFS_Call(adj_mat, keys, 1);
 }
 
-// void DFS_Call(int **graph, int *order, int phase)
-void DFS_Call(int (*func_ptr)(int, int), int *order, int phase)
+void DFS_Call(int **adj_mat, int *order, int phase)
 {
 	int i, j;
 
@@ -197,17 +156,16 @@ void DFS_Call(int (*func_ptr)(int, int), int *order, int phase)
 			SCCs[SCCs_ptr] = -1;
 			SCCs_ptr++;
 			n_SCCs++;
-			// DFS_d(graph, order, j);
-			DFS_d(func_ptr, order, j);
+			DFS_d(adj_mat, order, j, phase);
 		}
 	}
 	SCCs[SCCs_ptr] = -2;
 }
 
-// void DFS_d(int **graph, int *order, int v)
-void DFS_d(int (*func_ptr)(int, int), int *order, int v)
+void DFS_d(int **adj_mat, int *order, int v, int phase)
 {
 	int i, j;
+	int link;
 
 	visited[v] = 1;
 	time_DFS++; // time start at 1
@@ -216,10 +174,10 @@ void DFS_d(int (*func_ptr)(int, int), int *order, int v)
 	// printf("DFS_d %s d[%d] = %d\n", names[v], v, time_DFS);
 	for (i = 0; i < n_names; i++) {
 		j = order[i];
-		// if ((graph[v][j] == 1) && (visited[j] == 0)) {
-		if ((func_ptr(v, j) == 1) && (visited[j] == 0)) {
-			// DFS_d(graph, order, j);
-			DFS_d(func_ptr, order, j);
+		if (phase) link = adj_mat[j][v]; // transposed
+		else link = adj_mat[v][j];
+		if ((link == 1) && (visited[j] == 0)) {
+			DFS_d(adj_mat, order, j, phase);
 		}
 	}
 	visited[v] = 2;
