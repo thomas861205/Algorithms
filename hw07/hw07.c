@@ -2,23 +2,11 @@
 // 105061110, 周柏宇
 // 2020/04/24
 
-// potential improvement
-// space:
-// adjacent matrix -> link list ??
-// SCCs
-// 
-// time: other sorting algorithm
-// 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <sys/time.h>
+#include <sys/time.h>
 #include <time.h>
-
-// typedef struct sDFSInfo {
-// 	int p, d, f;
-// } DFSInfo;
 
 // typedef struct node {
 // 	int data;
@@ -36,15 +24,18 @@ int *f;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
+// Node *ll_SCCs; // linked list
 
 void readData();
 int nameToIndex(char *name);
+double GetTime(void);	// get local time in seconds
 void SCC();
 void DFS_Call(int **adj_mat, int *order, int phase);
 void DFS_d(int **adj_mat, int *order, int v, int phase);
 void InsertionSort(int *keys, int *values, int low, int high);
 void MergeSort(int *keys, int *values, int low, int high);
 void Merge(int *keys, int *values, int low, int mid, int high);
+void CountingSort(int *keys, int *values, int n, int k);
 
 int main(void)
 {
@@ -81,23 +72,18 @@ void readData()
 	int i, j;
 	char tmp[20], tmp2[20], tmp3[20];
 
-	scanf("%d", &n_names);
-	scanf("%d", &n_links);
+	scanf("%d %d", &n_names, &n_links);
 	names = (char **)malloc(sizeof(char *) * n_names);
+	adj_mat = (int **)malloc(sizeof(int *) * n_names);
 	for (i = 0; i < n_names; i++) {
 		scanf("%s", &tmp);
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
 		strcpy(names[i], tmp);
 	}
-
-	adj_mat = (int **)malloc(sizeof(int *) * n_names);
 	for (i = 0; i < n_names; i++) {
 		adj_mat[i] = (int *)malloc(sizeof(int) * n_names);
-		for (j = 0; j < n_names; j++) {
-			adj_mat[i][j] = 0;
-		}
+		for (j = 0; j < n_names; j++) adj_mat[i][j] = 0;
 	}
-
 	for (i = 0; i < n_links; i++) {
 		scanf("%s %s %s", &tmp, &tmp2, &tmp3);
 		adj_mat[nameToIndex(tmp)][nameToIndex(tmp3)] = 1;
@@ -114,6 +100,15 @@ int nameToIndex(char *name)
 	return -1;
 }
 
+// double GetTime(void)						// get local time in seconds
+// {
+// 	struct timeval tv;						// variable to store time
+
+// 	gettimeofday(&tv, NULL);				// get local time
+
+// 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+// }
+
 void SCC()
 {
 	int i;
@@ -123,8 +118,9 @@ void SCC()
 	for (i = 0; i < n_names; i++) keys[i] = i;
 
 	DFS_Call(adj_mat, keys, 0);
-	InsertionSort(keys, f, 0, n_names - 1);
-	// MergeSort(keys, f, 0, n_names - 1);
+	// InsertionSort(keys, f, 0, n_names - 1);
+	MergeSort(keys, f, 0, n_names - 1); // 1.15e-1 c9.dat
+	// CountingSort(keys, f, n_names, n_names); // 1.17e-1 c9.dat
 
 	// for (i = 0; i < n_names; i++) {
 	// 	printf("%s ", names[keys[i]]);
@@ -140,7 +136,7 @@ void DFS_Call(int **adj_mat, int *order, int phase)
 
 	visited = (int *)malloc(sizeof(int) * n_names);
 	f = (int *)malloc(sizeof(int) * n_names);
-	SCCs = (int *)malloc(sizeof(int) * n_names * 2);
+	SCCs = (int *)malloc(sizeof(int) * (n_names * 2 + 1));
 	for (i = 0; i < n_names; i++) {
 		visited[i] = 0;
 		f[i] = 0;
@@ -167,7 +163,6 @@ void DFS_d(int **adj_mat, int *order, int v, int phase)
 	int link;
 
 	visited[v] = 1;
-	time_DFS++; // time start at 1
 	SCCs[SCCs_ptr++] = v;
 	// printf("DFS_d %s d[%d] = %d\n", names[v], v, time_DFS);
 	for (i = 0; i < n_names; i++) {
@@ -179,7 +174,7 @@ void DFS_d(int **adj_mat, int *order, int v, int phase)
 		}
 	}
 	visited[v] = 2;
-	f[v] = ++time_DFS;
+	f[v] = time_DFS++; // finish order
 	// printf("DFS_d %s f[%d] = %d\n", names[v], v, time_DFS);
 }
 
@@ -246,4 +241,20 @@ void Merge(int *keys, int *values, int low, int mid, int high)
 			i++;
 		}
 	}
+}
+
+void CountingSort(int *keys, int *values, int n, int k)
+{
+	int i;
+	int *C;
+
+	C = (int *)malloc(sizeof(int) * k);
+	for (i = 0; i < k; i++) C[i] = 0;
+	for (i = 0; i < n; i++) C[values[i]]++;
+	for (i = 1; i < k; i++) C[i] += C[i - 1];
+	for (i = n - 1; i >= 0; i--) {
+		keys[i] = n - (C[values[i]] - 1) - 1;
+		C[values[i]]--;
+	}
+	free(C);
 }
