@@ -21,28 +21,34 @@
 // 	int p, d, f;
 // } DFSInfo;
 
-typedef struct node {
-	int data;
-	struct node *next;
-} Node;
+// typedef struct node {
+// 	int data;
+// 	struct node *next;
+// 	struct node *end;
+// } Node;
 
 int n_names;
 int n_links;
 int n_SCCs;
 char **names;
-int **graph;
-int **graphT; // transpose graph
+int **adj_matrix;
+// int **graphT; // transpose graph
 int *visited;
 int *f;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
+// Node *SCCs;
 
 void readData();
 int nameToIndex(char *name);
+int G(int i, int j);
+int G_T(int i, int j);
 void SCC();
-void DFS_Call(int **graph, int *order);
-void DFS_d(int **graph, int *order, int v);
+// void DFS_Call(int **graph, int *order, int phase);
+// void DFS_d(int **graph, int *order, int v);
+void DFS_Call(int (*func_ptr)(int, int), int *order, int phase);
+void DFS_d(int (*func_ptr)(int, int), int *order, int v);
 void InsertionSort(int *keys, int *values, int low, int high);
 void MergeSort(int *keys, int *values, int low, int high);
 void Merge(int *keys, int *values, int low, int mid, int high);
@@ -92,14 +98,14 @@ void readData()
 		strcpy(names[i], tmp);
 	}
 
-	graph = (int **)malloc(sizeof(int *) * n_names);
-	graphT = (int **)malloc(sizeof(int *) * n_names);
+	adj_matrix = (int **)malloc(sizeof(int *) * n_names);
+	// graphT = (int **)malloc(sizeof(int *) * n_names);
 	for (i = 0; i < n_names; i++) {
-		graph[i] = (int *)malloc(sizeof(int) * n_names);
-		graphT[i] = (int *)malloc(sizeof(int) * n_names);
+		adj_matrix[i] = (int *)malloc(sizeof(int) * n_names);
+		// graphT[i] = (int *)malloc(sizeof(int) * n_names);
 		for (j = 0; j < n_names; j++) {
-			graph[i][j] = 0;
-			graphT[i][j] = 0;
+			adj_matrix[i][j] = 0;
+			// graphT[i][j] = 0;
 		}
 	}
 
@@ -108,8 +114,8 @@ void readData()
 		// printf("%d -> %d\n", nameToIndex(tmp), nameToIndex(tmp3));
 		j = nameToIndex(tmp);
 		k = nameToIndex(tmp3);
-		graph[j][k] = 1;
-		graphT[k][j] = 1;
+		adj_matrix[j][k] = 1;
+		// graphT[k][j] = 1;
 	}
 
 	// for (i = 0; i < n_names; i++) {
@@ -133,6 +139,16 @@ int nameToIndex(char *name)
 	return -1;
 }
 
+int G(int i, int j)
+{
+	return adj_matrix[i][j];
+}
+
+int G_T(int i, int j)
+{
+	return adj_matrix[j][i];
+}
+
 void SCC()
 {
 	int i;
@@ -145,7 +161,7 @@ void SCC()
 	}
 	// printf("\n");
 
-	DFS_Call(graph, keys);
+	DFS_Call(G, keys, 1);
 	// InsertionSort(keys, f);
 	MergeSort(keys, f, 0, n_names - 1);
 
@@ -154,10 +170,12 @@ void SCC()
 	// }
 	// printf("\n");
 
-	DFS_Call(graphT, keys);
+	// DFS_Call(graphT, keys, 2);
+	DFS_Call(G_T, keys, 2);
 }
 
-void DFS_Call(int **graph, int *order)
+// void DFS_Call(int **graph, int *order, int phase)
+void DFS_Call(int (*func_ptr)(int, int), int *order, int phase)
 {
 	int i, j;
 
@@ -179,13 +197,15 @@ void DFS_Call(int **graph, int *order)
 			SCCs[SCCs_ptr] = -1;
 			SCCs_ptr++;
 			n_SCCs++;
-			DFS_d(graph, order, j);
+			// DFS_d(graph, order, j);
+			DFS_d(func_ptr, order, j);
 		}
 	}
 	SCCs[SCCs_ptr] = -2;
 }
 
-void DFS_d(int **graph, int *order, int v)
+// void DFS_d(int **graph, int *order, int v)
+void DFS_d(int (*func_ptr)(int, int), int *order, int v)
 {
 	int i, j;
 
@@ -196,8 +216,10 @@ void DFS_d(int **graph, int *order, int v)
 	// printf("DFS_d %s d[%d] = %d\n", names[v], v, time_DFS);
 	for (i = 0; i < n_names; i++) {
 		j = order[i];
-		if ((graph[v][j] == 1) && (visited[j] == 0)) {
-			DFS_d(graph, order, j);
+		// if ((graph[v][j] == 1) && (visited[j] == 0)) {
+		if ((func_ptr(v, j) == 1) && (visited[j] == 0)) {
+			// DFS_d(graph, order, j);
+			DFS_d(func_ptr, order, j);
 		}
 	}
 	visited[v] = 2;
@@ -231,8 +253,7 @@ void MergeSort(int *keys, int *values, int low, int high)
 {
 	int mid;
 
-	if (high - low > 0) InsertionSort(keys, values, low, high);
-	else {
+	if (low < high) {
 		mid = (low + high) / 2;
 		MergeSort(keys, values, low, mid);
 		MergeSort(keys, values, mid + 1, high);
