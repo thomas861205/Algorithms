@@ -153,8 +153,7 @@ void DFS_Call(int **adj_mat, int *order, int phase)
 	for (i = 0; i < n_names; i++) {
 		j = order[i];
 		if (visited[j] == 0) {
-			SCCs[SCCs_ptr] = -1;
-			SCCs_ptr++;
+			SCCs[SCCs_ptr++] = -1;
 			n_SCCs++;
 			DFS_d(adj_mat, order, j, phase);
 		}
@@ -169,8 +168,7 @@ void DFS_d(int **adj_mat, int *order, int v, int phase)
 
 	visited[v] = 1;
 	time_DFS++; // time start at 1
-	SCCs[SCCs_ptr] = v;
-	SCCs_ptr++;
+	SCCs[SCCs_ptr++] = v;
 	// printf("DFS_d %s d[%d] = %d\n", names[v], v, time_DFS);
 	for (i = 0; i < n_names; i++) {
 		j = order[i];
@@ -181,8 +179,7 @@ void DFS_d(int **adj_mat, int *order, int v, int phase)
 		}
 	}
 	visited[v] = 2;
-	time_DFS++;
-	f[v] = time_DFS;
+	f[v] = ++time_DFS;
 	// printf("DFS_d %s f[%d] = %d\n", names[v], v, time_DFS);
 }
 
