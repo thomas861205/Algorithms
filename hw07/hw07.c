@@ -27,7 +27,6 @@ int SCCs_ptr;
 
 void readData();
 int nameToIndex(char *name);
-void printList();
 double GetTime(void);	// get local time in seconds
 void SCC();
 void DFS_Call(int **G, int *len, int *order);
@@ -37,23 +36,22 @@ void MergeSort(int *keys, int *values, int low, int high);
 void Merge(int *keys, int *values, int low, int mid, int high);
 void CountingSort(int *keys, int *values, int n, int k);
 void Sort(int *list, int len);
-void Sort_Call(int *keys);
+void QuickSort(int *list, int *f, int low, int high);
+int Partition(int *list, int low, int high);
+void Swap(int *list, int i, int j);
 void freeAll();
 
 int main(void)
 {
 	int i;
 	int subgroup_idx = 0;
-	// clock_t start, end;
-	// double time_elapsed;
+	double start, end;
 
 	readData();
-	// printList();
-	// start = clock();
+	start = GetTime();
 	SCC();
-	// end = clock();
-	// time_elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
-	// printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, time_elapsed);
+	end = GetTime();
+	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, end - start);
 	printf("Number of subgroups: %d\n", n_SCCs);
 	for (i = 0; SCCs[i] != -2; i++) {
 		if (i == 0) {
@@ -135,91 +133,47 @@ int nameToIndex(char *name)
 	return -1;
 }
 
-void printList()
+double GetTime(void)						// get local time in seconds
 {
-	int i, j;
+	struct timeval tv;						// variable to store time
 
-	// for (i = 0; i < n_names; i++) {
-	// 	printf("%d ", adj_l_size[i]);
-	// }
-	// printf("\n");
-	// for (i = 0; i < n_names; i++) {
-	// 	printf("%d ", adj_l_ptr[i]);
-	// }
-	// printf("\n");
-	printf("G: \n");
-	for (i = 0; i < n_names; i++) {
-		printf("%d :", i);
-		for (j = 0; j < adj_l_ptr[i]; j++) printf(" %d", adj_l[i][j]);
-		printf("\n");
-	}
-	printf("G_T: \n");
-	for (i = 0; i < n_names; i++) {
-		printf("%d :", i);
-		for (j = 0; j < adj_lT_ptr[i]; j++) printf(" %d", adj_lT[i][j]);
-		printf("\n");
-	}
+	gettimeofday(&tv, NULL);				// get local time
+
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
-
-// double GetTime(void)						// get local time in seconds
-// {
-// 	struct timeval tv;						// variable to store time
-
-// 	gettimeofday(&tv, NULL);				// get local time
-
-// 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
-// }
 
 void SCC()
 {
 	int i;
-	// clock_t t0, t1, t2, t3, t4, t5;
+	double t0, t1, t2, t3, t4, t5;
 
-	// t0 = clock();
+	t0 = GetTime();
 	visited = (int *)malloc(sizeof(int) * n_names);
 	f = (int *)malloc(sizeof(int) * n_names);
 	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
 	keys = (int *)malloc(sizeof(int) * n_names);
-	
+
 	for (i = 0; i < n_names; i++) keys[i] = i;
-	// t1 = clock();
-	// printf("Key generate: %.5es\n", ((double) (t1 - t0)) / CLOCKS_PER_SEC);
+	t1 = GetTime();
+	printf("Key generate: %.5es\n", t1 - t0);
 
 	DFS_Call(adj_l, adj_l_ptr, keys);
-	// t2 = clock();
-	// printf("First DFS: %.5es\n", ((double) (t2 - t1)) / CLOCKS_PER_SEC);
+	t2 = GetTime();
+	printf("First DFS: %.5es\n", t2 - t1);
 	
-	// t3 = clock();
 	// Sort_Call(keys);
 	CountingSort(keys, f, n_names, n_names);
-	// printf("Sort_Call: %.5es\n", ((double) (t3 - t2)) / CLOCKS_PER_SEC);
+	t3 = GetTime();
+	printf("Sort 1: %.5es\n", t3 - t2);
 
-	// t4 = clock();
-	for (i = 0; i < n_names; i++) Sort(adj_lT[i], adj_lT_ptr[i]);
-	// printf("Sort: %.5es\n", ((double) (t4 - t3)) / CLOCKS_PER_SEC);
+	// for (i = 0; i < n_names; i++) Sort(adj_lT[i], adj_lT_ptr[i]);
+	for (i = 0; i < n_names; i++) QuickSort(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
+	t4 = GetTime();
+	printf("Sort 2: %.5es\n", t4 - t3);
 
 	DFS_Call(adj_lT, adj_lT_ptr, keys);
-	// t5 = clock();
-	// printf("Second DFS: %.5es\n", ((double) (t5 - t4)) / CLOCKS_PER_SEC);
-}
-
-void Sort_Call(int *keys)
-{
-	int j, i;							// index
-	int tmp_key;
-	int tmp_value;
-
-	for (j = 1; j < n_names; j++) {	// assume list[0 : j - 1] already sorted
-		tmp_key = keys[j];
-		tmp_value = f[j];				// copy the word at index j
-		i = j - 1;					// initialize i with j - 1
-		// repeat until list[i] is smaller 
-		while ((i >= 0) && (tmp_value > f[i])) {
-			keys[i + 1] = keys[i];
-			i--;					// move on to the next word
-		}
-		keys[i + 1] = tmp_key;			// fill the word list[j] at index i + 1
-	}
+	t5 = GetTime();
+	printf("Second DFS: %.5es\n", t5 - t4);
 }
 
 void Sort(int *list, int len)
@@ -351,6 +305,40 @@ void CountingSort(int *keys, int *values, int n, int k)
 		C[values[i]]--;
 	}
 	free(C);
+}
+
+void QuickSort(int *list, int *f, int low, int high)
+{
+	int mid;
+
+	if (low < high) {
+		mid = Partition(list, low, high);
+		QuickSort(list, f, low, mid - 1);
+		QuickSort(list, f, mid + 1, high);
+	}
+}
+
+int Partition(int *list, int low, int high)
+{
+	int v, vf, i, j;
+
+	v = list[low];
+	vf = f[v]; i = low; j = high;
+	do {
+		do {i++;} while ((f[list[i]] > vf) && (i < high));
+		do {j--;} while ((f[list[j]] < vf) && (j > low));
+		if (i < j) Swap(list, i, j);
+	} while (i < j);
+	list[low] = list[j]; list[j] = v;
+
+	return j;
+}
+
+void Swap(int *list, int i, int j)
+{
+	int tmp = list[i];
+
+	list[i] = list[j]; list[j] = tmp;
 }
 
 void freeAll()
