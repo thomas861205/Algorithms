@@ -19,6 +19,7 @@ int n_SCCs;
 char **names;
 int **adj_mat;
 int **adj_l;
+int **adj_lT;
 Node **adj_ll;
 Node **adj_llT;
 int *visited;
@@ -75,49 +76,54 @@ void readData()
 {
 	int i, j, k;
 	char tmp[20], tmp2[20], tmp3[20];
+	int *adj_l_size;
+	int *adj_l_ptr;
 
 	scanf("%d %d", &n_names, &n_links);
 	names = (char **)malloc(sizeof(char *) * n_names);
 	adj_mat = (int **)malloc(sizeof(int *) * n_names);
-	adj_ll = (Node **)malloc(sizeof(Node *) * n_names);
-	adj_llT = (Node **)malloc(sizeof(Node *) * n_names);
+	// adj_l = (int *)malloc(sizeof(int *) * n_names);
+	// adj_ll = (Node **)malloc(sizeof(Node *) * n_names);
+	// adj_llT = (Node **)malloc(sizeof(Node *) * n_names);
 	for (i = 0; i < n_names; i++) {
 		scanf("%s", &tmp);
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
 		strcpy(names[i], tmp);
 	}
 	for (i = 0; i < n_names; i++) {
-		adj_mat[i] = (int *)malloc(sizeof(int) * n_names);
-		adj_ll[i] = NULL; adj_llT[i] = NULL;
-		for (j = 0; j < n_names; j++) adj_mat[i][j] = 0;
+		// adj_mat[i] = (int *)malloc(sizeof(int) * n_names);
+		adj_mat[i] = (int *)calloc(n_names, sizeof(int));
+		// adj_l[i] = (int *)malloc(sizeof(int) * (n_links / n_names));
+		// adj_ll[i] = NULL; adj_llT[i] = NULL;
+		// for (j = 0; j < n_names; j++) adj_mat[i][j] = 0;
 	}
 	for (i = 0; i < n_links; i++) {
 		scanf("%s %s %s", &tmp, &tmp2, &tmp3);
 		j = nameToIndex(tmp);
 		k = nameToIndex(tmp3);
 		adj_mat[j][k] = 1;
-		if (adj_ll[j] == NULL) {
-			adj_ll[j] = (Node *)malloc(sizeof(Node));
-			adj_ll[j]->data = k;
-			adj_ll[j]->next = NULL;
-		}
-		else {
-			Node *newnode = (Node *)malloc(sizeof(Node));
-			newnode->data = k;
-			newnode->next = adj_ll[j];
-			adj_ll[j] = newnode;
-		}
-		if (adj_llT[k] == NULL) {
-			adj_llT[k] = (Node *)malloc(sizeof(Node));
-			adj_llT[k]->data = j;
-			adj_llT[k]->next = NULL;
-		}
-		else {
-			Node *newnode = (Node *)malloc(sizeof(Node));
-			newnode->data = j;
-			newnode->next = adj_llT[k];
-			adj_llT[k] = newnode;
-		}
+		// if (adj_ll[j] == NULL) {
+		// 	adj_ll[j] = (Node *)malloc(sizeof(Node));
+		// 	adj_ll[j]->data = k;
+		// 	adj_ll[j]->next = NULL;
+		// }
+		// else {
+		// 	Node *newnode = (Node *)malloc(sizeof(Node));
+		// 	newnode->data = k;
+		// 	newnode->next = adj_ll[j];
+		// 	adj_ll[j] = newnode;
+		// }
+		// if (adj_llT[k] == NULL) {
+		// 	adj_llT[k] = (Node *)malloc(sizeof(Node));
+		// 	adj_llT[k]->data = j;
+		// 	adj_llT[k]->next = NULL;
+		// }
+		// else {
+		// 	Node *newnode = (Node *)malloc(sizeof(Node));
+		// 	newnode->data = j;
+		// 	newnode->next = adj_llT[k];
+		// 	adj_llT[k] = newnode;
+		// }
 	}
 }
 
@@ -182,15 +188,15 @@ void SCC()
 	// InsertionSort(keys, f, 0, n_names - 1);
 	// MergeSort(keys, f, 0, n_names - 1); // 1.15e-1 c9.dat
 	CountingSort(keys, f, n_names, n_names); // 1.17e-1 c9.dat
-	for (i = 0; i < n_names; i++) {
-		// printf("%s ", names[keys[i]]);
-		printf("%d ", f[i]);
-	}
-	for (i = 0; i < n_names; i++) {
-		// printf("%s ", names[keys[i]]);
-		printf("%d ", keys[i]);
-	}
-	printf("\n");
+	// for (i = 0; i < n_names; i++) {
+	// 	// printf("%s ", names[keys[i]]);
+	// 	printf("%d ", f[i]);
+	// }
+	// for (i = 0; i < n_names; i++) {
+	// 	// printf("%s ", names[keys[i]]);
+	// 	printf("%d ", keys[i]);
+	// }
+	// printf("\n");
 
 	DFS_Call(adj_mat, keys, 1);
 }
@@ -199,15 +205,18 @@ void DFS_Call(int **adj_mat, int *order, int phase)
 {
 	int i, j;
 
-	visited = (int *)malloc(sizeof(int) * n_names);
-	f = (int *)malloc(sizeof(int) * n_names);
-	SCCs = (int *)malloc(sizeof(int) * (n_names * 2 + 1));
-	for (i = 0; i < n_names; i++) {
-		visited[i] = 0;
-		f[i] = 0;
-		SCCs[2 * i] = 0;
-		SCCs[2 * i + 1] = 0;
-	}
+	visited = (int *)calloc(n_names, sizeof(int));
+	f = (int *)calloc(n_names, sizeof(int));
+	SCCs = (int *)calloc((n_names * 2 + 1), sizeof(int));
+	// visited = (int *)malloc(sizeof(int) * n_names);
+	// f = (int *)malloc(sizeof(int) * n_names);
+	// SCCs = (int *)malloc(sizeof(int) * (n_names * 2 + 1));
+	// for (i = 0; i < n_names; i++) {
+	// 	visited[i] = 0;
+	// 	f[i] = 0;
+	// 	SCCs[2 * i] = 0;
+	// 	SCCs[2 * i + 1] = 0;
+	// }
 	time_DFS = 0;
 	SCCs_ptr = 0;
 	n_SCCs = 0;
@@ -313,8 +322,9 @@ void CountingSort(int *keys, int *values, int n, int k)
 	int i;
 	int *C;
 
-	C = (int *)malloc(sizeof(int) * k);
-	for (i = 0; i < k; i++) C[i] = 0;
+	C = (int *)calloc(k, sizeof(int));
+	// C = (int *)malloc(sizeof(int) * k);
+	// for (i = 0; i < k; i++) C[i] = 0;
 	for (i = 0; i < n; i++) C[values[i]]++;
 	for (i = 1; i < k; i++) C[i] += C[i - 1];
 	for (i = n - 1; i >= 0; i--) {
