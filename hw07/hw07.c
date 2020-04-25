@@ -119,8 +119,8 @@ void SCC()
 
 	DFS_Call(adj_mat, keys, 0);
 	// InsertionSort(keys, f, 0, n_names - 1);
-	MergeSort(keys, f, 0, n_names - 1); // 1.15e-1 c9.dat
-	// CountingSort(keys, f, n_names, n_names); // 1.17e-1 c9.dat
+	// MergeSort(keys, f, 0, n_names - 1); // 1.15e-1 c9.dat
+	CountingSort(keys, f, n_names, n_names); // 1.17e-1 c9.dat
 
 	// for (i = 0; i < n_names; i++) {
 	// 	printf("%s ", names[keys[i]]);
