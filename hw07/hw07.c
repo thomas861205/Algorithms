@@ -8,26 +8,29 @@
 #include <sys/time.h>
 #include <time.h>
 
-// typedef struct node {
-// 	int data;
-// 	struct node *next;
-// 	struct node *end;
-// } Node;
+typedef struct node {
+	int data;
+	struct node *next;
+} Node;
 
 int n_names;
 int n_links;
 int n_SCCs;
 char **names;
 int **adj_mat;
+int **adj_l;
+Node **adj_ll;
+Node **adj_llT;
 int *visited;
 int *f;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
-// Node *ll_SCCs; // linked list
+Node **ll_SCCs; // linked list
 
 void readData();
 int nameToIndex(char *name);
+void printLinkedList();
 double GetTime(void);	// get local time in seconds
 void SCC();
 void DFS_Call(int **adj_mat, int *order, int phase);
@@ -45,6 +48,7 @@ int main(void)
 	double time_elapsed;
 
 	readData();
+	// printLinkedList();
 	start = clock();
 	SCC();
 	end = clock();
@@ -69,12 +73,14 @@ int main(void)
 
 void readData()
 {
-	int i, j;
+	int i, j, k;
 	char tmp[20], tmp2[20], tmp3[20];
 
 	scanf("%d %d", &n_names, &n_links);
 	names = (char **)malloc(sizeof(char *) * n_names);
 	adj_mat = (int **)malloc(sizeof(int *) * n_names);
+	adj_ll = (Node **)malloc(sizeof(Node *) * n_names);
+	adj_llT = (Node **)malloc(sizeof(Node *) * n_names);
 	for (i = 0; i < n_names; i++) {
 		scanf("%s", &tmp);
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
@@ -82,11 +88,36 @@ void readData()
 	}
 	for (i = 0; i < n_names; i++) {
 		adj_mat[i] = (int *)malloc(sizeof(int) * n_names);
+		adj_ll[i] = NULL; adj_llT[i] = NULL;
 		for (j = 0; j < n_names; j++) adj_mat[i][j] = 0;
 	}
 	for (i = 0; i < n_links; i++) {
 		scanf("%s %s %s", &tmp, &tmp2, &tmp3);
-		adj_mat[nameToIndex(tmp)][nameToIndex(tmp3)] = 1;
+		j = nameToIndex(tmp);
+		k = nameToIndex(tmp3);
+		adj_mat[j][k] = 1;
+		if (adj_ll[j] == NULL) {
+			adj_ll[j] = (Node *)malloc(sizeof(Node));
+			adj_ll[j]->data = k;
+			adj_ll[j]->next = NULL;
+		}
+		else {
+			Node *newnode = (Node *)malloc(sizeof(Node));
+			newnode->data = k;
+			newnode->next = adj_ll[j];
+			adj_ll[j] = newnode;
+		}
+		if (adj_llT[k] == NULL) {
+			adj_llT[k] = (Node *)malloc(sizeof(Node));
+			adj_llT[k]->data = j;
+			adj_llT[k]->next = NULL;
+		}
+		else {
+			Node *newnode = (Node *)malloc(sizeof(Node));
+			newnode->data = j;
+			newnode->next = adj_llT[k];
+			adj_llT[k] = newnode;
+		}
 	}
 }
 
@@ -98,6 +129,36 @@ int nameToIndex(char *name)
 		if (!strcmp(name, names[i])) return i;
 	}
 	return -1;
+}
+
+void printLinkedList()
+{
+	int i, j;
+	Node *curr;
+
+	for (i = 0; i < n_names; i++) {
+		printf("%d :", i);
+		curr = adj_ll[i];
+		while (curr) {
+			printf("%d ", curr->data);
+			curr = curr->next;
+		}
+		printf("\n");
+	}
+	for (i = 0; i < n_names; i++) {
+		printf("%d :", i);
+		curr = adj_llT[i];
+		while (curr) {
+			printf("%d ", curr->data);
+			curr = curr->next;
+		}
+		printf("\n");
+	}
+	// for (i = 0; i < n_names; i++) {
+	// 	printf("%d :", i);
+	// 	for (j = 0; j < n_names; j++) printf("%d ", adj_mat[i][j]);
+	// 	printf("\n");
+	// }
 }
 
 // double GetTime(void)						// get local time in seconds
@@ -121,11 +182,15 @@ void SCC()
 	// InsertionSort(keys, f, 0, n_names - 1);
 	// MergeSort(keys, f, 0, n_names - 1); // 1.15e-1 c9.dat
 	CountingSort(keys, f, n_names, n_names); // 1.17e-1 c9.dat
-
-	// for (i = 0; i < n_names; i++) {
-	// 	printf("%s ", names[keys[i]]);
-	// }
-	// printf("\n");
+	for (i = 0; i < n_names; i++) {
+		// printf("%s ", names[keys[i]]);
+		printf("%d ", f[i]);
+	}
+	for (i = 0; i < n_names; i++) {
+		// printf("%s ", names[keys[i]]);
+		printf("%d ", keys[i]);
+	}
+	printf("\n");
 
 	DFS_Call(adj_mat, keys, 1);
 }
