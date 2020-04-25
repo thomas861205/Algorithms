@@ -55,7 +55,7 @@ int main(void)
 	// time_elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
 	// printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, time_elapsed);
 	printf("Number of subgroups: %d\n", n_SCCs);
-	for (i = 0; i < n_names * 2 && SCCs[i] != -2; i++) {
+	for (i = 0; SCCs[i] != -2; i++) {
 		if (i == 0) {
 			printf("  Subgroup %d:", ++subgroup_idx);
 		}
@@ -92,11 +92,9 @@ void readData()
 		strcpy(names[i], tmp);
 	}
 	for (i = 0; i < n_names; i++) {
-		// adj_l_size[i] = n_links / n_names;
-		adj_l_size[i] = 10;
+		adj_l_size[i] = n_links / n_names;
 		adj_l[i] = (int *)malloc(sizeof(int) * adj_l_size[i]);
-		// adj_lT_size[i] = n_links / n_names;
-		adj_lT_size[i] = 10;
+		adj_lT_size[i] = n_links / n_names;
 		adj_lT[i] = (int *)malloc(sizeof(int) * adj_lT_size[i]);
 	}
 	for (i = 0; i < n_links; i++) {
@@ -106,7 +104,7 @@ void readData()
 
 		if (adj_l_ptr[j] >= adj_l_size[j]) {
 			adj_l_size[j] *= 2;
-			// int *newptr = (int *)realloc(adj_l[j], adj_l_size[j]);
+			// adj_l[j] = (int *)realloc(adj_l[j], adj_l_size[j]);
 			newptr = (int *)malloc(sizeof(int) * adj_l_size[j]);
 			for (l = 0; l < adj_l_ptr[j]; l++) newptr[l] = adj_l[j][l];
 			free(adj_l[j]);
@@ -182,6 +180,7 @@ void SCC()
 	f = (int *)malloc(sizeof(int) * n_names);
 	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
 	keys = (int *)malloc(sizeof(int) * n_names);
+	
 	for (i = 0; i < n_names; i++) keys[i] = i;
 	// t1 = clock();
 	// printf("Key generate: %.5es\n", ((double) (t1 - t0)) / CLOCKS_PER_SEC);
@@ -191,7 +190,8 @@ void SCC()
 	// printf("First DFS: %.5es\n", ((double) (t2 - t1)) / CLOCKS_PER_SEC);
 	
 	// t3 = clock();
-	Sort_Call(keys);
+	// Sort_Call(keys);
+	CountingSort(keys, f, n_names, n_names);
 	// printf("Sort_Call: %.5es\n", ((double) (t3 - t2)) / CLOCKS_PER_SEC);
 
 	// t4 = clock();
@@ -271,7 +271,6 @@ void DFS_d(int **G, int *len, int v)
 			DFS_d(G, len, j);
 		}
 	}
-	visited[v] = 2;
 	f[v] = time_DFS++; // finish order
 }
 
