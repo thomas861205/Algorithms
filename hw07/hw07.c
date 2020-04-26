@@ -24,6 +24,7 @@ int *keys;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
+int *C;
 
 void readData();
 int nameToIndex(char *name);
@@ -35,6 +36,7 @@ void InsertionSort(int *keys, int *values, int low, int high);
 void MergeSort(int *keys, int *values, int low, int high);
 void Merge(int *keys, int *values, int low, int mid, int high);
 void CountingSort(int *keys, int *values, int n, int k);
+void CountingSort2(int *keys, int *values, int n, int k);
 void Sort(int *list, int len);
 void QuickSort(int *list, int *f, int low, int high);
 int Partition(int *list, int low, int high);
@@ -135,11 +137,11 @@ int nameToIndex(char *name)
 
 double GetTime(void)						// get local time in seconds
 {
-	struct timeval tv;						// variable to store time
+	// struct timeval tv;						// variable to store time
 
-	gettimeofday(&tv, NULL);				// get local time
+	// gettimeofday(&tv, NULL);				// get local time
 
-	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+	// return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
 void SCC()
@@ -152,6 +154,7 @@ void SCC()
 	f = (int *)malloc(sizeof(int) * n_names);
 	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
 	keys = (int *)malloc(sizeof(int) * n_names);
+	C = (int *)malloc(sizeof(int) * n_names);
 
 	for (i = 0; i < n_names; i++) keys[i] = i;
 	t1 = GetTime();
@@ -167,7 +170,8 @@ void SCC()
 	printf("Sort 1: %.5es\n", t3 - t2);
 
 	// for (i = 0; i < n_names; i++) Sort(adj_lT[i], adj_lT_ptr[i]);
-	for (i = 0; i < n_names; i++) QuickSort(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
+	for (i = 0; i < n_names; i++) CountingSort2(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
+	// for (i = 0; i < n_names; i++) CountingSort(adj_lT[i], f, adj_lT_ptr[i], n_names);
 	t4 = GetTime();
 	printf("Sort 2: %.5es\n", t4 - t3);
 
@@ -295,16 +299,29 @@ void Merge(int *keys, int *values, int low, int mid, int high)
 void CountingSort(int *keys, int *values, int n, int k)
 {
 	int i;
-	int *C;
 
-	C = (int *)calloc(k, sizeof(int));
+	for (i = 0; i < k; i++) C[i] = 0;
 	for (i = 0; i < n; i++) C[values[i]]++;
 	for (i = 1; i < k; i++) C[i] += C[i - 1];
 	for (i = n - 1; i >= 0; i--) {
 		keys[i] = n - (C[values[i]] - 1) - 1;
 		C[values[i]]--;
 	}
-	free(C);
+}
+
+void CountingSort2(int *keys, int *values, int n, int k)
+{
+	int i;
+
+	for (i = 0; i < k; i++) C[i] = 0;
+	// for (i = 0; i < n; i++) C[values[i]]++;
+	for (i = 0; i < n; i++) C[values[keys[i]]]++;
+	for (i = 1; i < k; i++) C[i] += C[i - 1];
+	for (i = n - 1; i >= 0; i--) {
+		// keys[i] = n - (C[values[i]] - 1) - 1;
+		keys[i] = n - (C[values[keys[i]]] - 1) - 1;
+		C[values[keys[i]]]--;
+	}
 }
 
 void QuickSort(int *list, int *f, int low, int high)
@@ -357,4 +374,5 @@ void freeAll()
 	free(f);
 	free(keys);
 	free(SCCs);
+	free(C);
 }
