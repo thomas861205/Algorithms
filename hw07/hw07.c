@@ -130,11 +130,12 @@ void readData()
 	}
 }
 
-int nameToIndex(char *name)
+int nameToIndex(char *name) // convert name to array index
 {
-	int i;
+	int i; // loop index
 
 	for (i = 0; i < n_names; i++) {
+		 // find the index whose value is the same as name
 		if (!strcmp(name, names[i])) return i;
 	}
 	return -1;
@@ -142,96 +143,114 @@ int nameToIndex(char *name)
 
 double GetTime(void)						// get local time in seconds
 {
-	struct timeval tv;						// variable to store time
+	// struct timeval tv;						// variable to store time
 
-	gettimeofday(&tv, NULL);				// get local time
+	// gettimeofday(&tv, NULL);				// get local time
 
-	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+	// return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
-void SCC()
+void SCC() // find strongly connected components of a graph
 {
-	int i;
-	double t0, t1, t2, t3, t4, t5;
+	int i; // loop index
 
-	t0 = GetTime();
+	// allocate memory
 	f = (int *)malloc(sizeof(int) * n_names);
-	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
 	idx = (int *)malloc(sizeof(int) * n_names);
+	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
 	visited = (int *)malloc(sizeof(int) * n_names);
 	C = (int *)malloc(sizeof(int) * n_names);
 
+	// initialize the index
 	for (i = 0; i < n_names; i++) idx[i] = i;
-	t1 = GetTime();
-	printf("Index init & malloc: %.5es\n", t1 - t0);
 
+	// traverse the graph in the given order
 	DFS_Call(adj_l, adj_l_ptr, idx);
-	t2 = GetTime();
-	printf("First DFS: %.5es\n", t2 - t1);
 
+	for (i = 0; i < n_names; i++) printf("%d ", i);
+	printf("\n");
+	for (i = 0; i < n_names; i++) printf("%d ", f[i]);
+	printf("\n");
+
+	// sort the index using the array f as key (decreasing order)
 	CountingSort(idx, f, n_names, n_names);
-	t3 = GetTime();
-	printf("Sort 1: %.5es\n", t3 - t2);
 
-	for (i = 0; i < n_names; i++) CountingSort(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
-	t4 = GetTime();
-	printf("Sort 2: %.5es\n", t4 - t3);
+	for (i = 0; i < n_names; i++) printf("%d ", idx[i]);
+	printf("\n");
 
+	// sort the adjacency list of the transposed graph in-place
+	// using the array f as key (decreasing order)
+	for (i = 0; i < n_names; i++) {
+		CountingSort(adj_lT[i], f, adj_lT_ptr[i] - 1, n_names);
+	}
+
+	// traverse the transposed graph in the given order
 	DFS_Call(adj_lT, adj_lT_ptr, idx);
-	t5 = GetTime();
-	printf("Second DFS: %.5es\n", t5 - t4);
 }
 
+// initialization and recursive DFS function call
 void DFS_Call(int **G, int *len, int *idx)
 {
-	int i, j;
+	int i, j; // loop index
 
+	// initialize
 	for (i = 0; i < n_names; i++) visited[i] = 0;
 	time_DFS = 0;
 	SCCs_ptr = 0;
 	n_SCCs = 0;
 	for (i = 0; i < n_names; i++) {
-		j = idx[i];
+		j = idx[i]; // decide the vertex to travel according idx
 		if (visited[j] == 0) {
-			SCCs[SCCs_ptr++] = -1;
-			n_SCCs++;
-			DFS_d(G, len, j);
+			SCCs[SCCs_ptr++] = -1; // separate different subgroups with -1
+			n_SCCs++; // number of subgroups increase by one
+			DFS_d(G, len, j); // start DFS from vertex j
 		}
 	}
-	SCCs[SCCs_ptr] = -2;
+	SCCs[SCCs_ptr] = -2; // end of array
 }
 
-void DFS_d(int **G, int *len, int v)
+
+void DFS_d(int **G, int *len, int v) // DFS from vertex v of the graph G
 {
-	int i, j;
+	int i, j; // loop index
 
-	visited[v] = 1;
-	SCCs[SCCs_ptr++] = v;
+	visited[v] = 1; // vertex v has been visited
+	SCCs[SCCs_ptr++] = v; // add vertex v to the current subgroup
 	for (i = 0; i < len[v]; i++) {
-		j = G[v][i];
+		j = G[v][i]; // decide next vertex to travel
 		if (visited[j] == 0) {
-			DFS_d(G, len, j);
+			DFS_d(G, len, j); // DFS from vertex j
 		}
 	}
-	f[v] = time_DFS++; // finish order
+	f[v] = time_DFS++; // record the finishing order
 }
 
+// sort the idx by its key using counting sort
 void CountingSort(int *idx, int *key, int n, int k)
 {
-	int i;
+	int i, j; // loop index
+	int tmp, tmp_idx; // temporary variable
 
-	for (i = 0; i < k; i++) C[i] = 0;
-	for (i = 0; i < n; i++) C[key[idx[i]]]++;
-	for (i = 1; i < k; i++) C[i] += C[i - 1];
+	for (i = 0; i < k; i++) C[i] = 0; // initialize C to all 0
+	for (i = 0; i < n; i++) {
+		C[key[idx[i]]]++; // count # elements in C[key[idx[i]]]
+	}
+	for (i = 1; i < k; i++) {
+		C[i] += C[i - 1]; // C[i] is the accumulate # of elements
+	}
 	for (i = n - 1; i >= 0; i--) {
-		idx[i] = n - (C[key[idx[i]]] - 1) - 1;
+		// store sorted order back to array idx
+		tmp_idx = n - (C[key[idx[i]]] - 1) - 1; // decreasing order
+		tmp = idx[tmp_idx];
+		idx[tmp_idx] = idx[i];
+		idx[i] = tmp;
 		C[key[idx[i]]]--;
 	}
 }
 
-void freeAll()
+void freeAll() // free all allocated memory
 {
-	int i;
+	int i; // loop index
 
 	for (i = 0; i < n_names; i++) {
 		free(names[i]);
