@@ -6,71 +6,75 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-// #include <time.h>
 
-int n_names;
-int n_links;
-int n_SCCs;
-char **names;
-int **adj_l;
-int *adj_l_size;
-int *adj_l_ptr;
-int **adj_lT;
-int *adj_lT_size;
-int *adj_lT_ptr;
-int *f;
-int *idx;
-int *visited;
-int time_DFS;
-int *SCCs;
-int SCCs_ptr;
-int *C;
+int n_names; // number of people
+int n_links; // number of communication records
+int n_SCCs; // number of friend groups
+char **names; // array of names
+int **adj_l; // adjacency list
+int *adj_l_size; // size of list in adj_l
+int *adj_l_ptr; // current position of list in adj_l
+int **adj_lT; // adjacency list (transposed)
+int *adj_lT_size; // size of list in adj_lT
+int *adj_lT_ptr; // current position of list in adj_lT
+int *f; // node's finish order
+int *idx; // index mapping
+int *visited; // record visited nodes
+int time_DFS; // DFS clock
+int *SCCs; // record nodes traversed by DFS
+int SCCs_ptr; // current position of SCCs
+int *C; // temporary array for CountingSort()
 
-void readData();
-int nameToIndex(char *name);
-double GetTime(void);	// get local time in seconds
-void SCC();
+void readData(); // read data, construct the graph and its transposed version
+int nameToIndex(char *name); // convert name to array index
+double GetTime(void); // get local time in seconds
+void SCC(); // find strongly connected components of a graph
 void DFS_Call(int **G, int *len, int *idx);
-void DFS_d(int **G, int *len, int v);
-void CountingSort(int *keys, int *values, int n, int k);
-void freeAll();
+							  // initialization and recursive DFS function call
+void DFS_d(int **G, int *len, int v); // DFS from vertex v of the graph G
+void CountingSort(int *idx, int *key, int n, int k);
+								 // sort the idx by its key using counting sort
+void freeAll(); // free all allocated memory
 
 int main(void)
 {
-	int i;
-	int subgroup_idx = 0;
-	double start, end;
+	int i; // loop index
+	int component_idx = 0; // index of strongly connected component
+	double start, end; // timestamp
 
-	readData();
-	start = GetTime();
-	SCC();
-	end = GetTime();
-	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, end - start);
-	printf("Number of subgroups: %d\n", n_SCCs);
-	for (i = 0; SCCs[i] != -2; i++) {
+	readData(); // read data, construct the graph and its transposed version
+	start = GetTime(); // start time
+	SCC(); // find strongly connected components of a graph
+	end = GetTime(); // end time
+	// print out input information, execution time
+	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, start - end);
+	printf("Number of subgroups: %d\n", n_SCCs); // print out number of groups
+	for (i = 0; SCCs[i] != -2; i++) { // print out member of groups
 		if (i == 0) {
-			printf("  Subgroup %d:", ++subgroup_idx);
+			printf("  Subgroup %d:", ++component_idx);
 		}
 		else if (SCCs[i] == -1) {
-			printf("\n  Subgroup %d:", ++subgroup_idx);
+			printf("\n  Subgroup %d:", ++component_idx);
 		}
 		else {
 			printf(" %s", names[SCCs[i]]);
 		}
 	}
 	printf("\n");
-	freeAll();
+	freeAll(); // free all allocated memory
 
 	return 0;
 }
 
 void readData()
 {
-	int i, j, k, l;
-	char tmp[20], tmp2[20], tmp3[20];
-	int *newptr;
+	int i, j, k, l; // indices
+	char tmp[20], tmp2[20], tmp3[20]; // temporary variable for input
+	int *newptr; // temporary pointer
 
+	// input number of people and communication records
 	scanf("%d %d", &n_names, &n_links);
+	// allocate memory
 	names = (char **)malloc(sizeof(char *) * n_names);
 	adj_l = (int **)malloc(sizeof(int *) * n_names);
 	adj_l_size = (int *)malloc(sizeof(int) * n_names);
@@ -79,41 +83,50 @@ void readData()
 	adj_lT_size = (int *)malloc(sizeof(int) * n_names);
 	adj_lT_ptr = (int *)calloc(n_names, sizeof(int));
 	for (i = 0; i < n_names; i++) {
-		scanf("%s", tmp);
+		scanf("%s", tmp); // input names
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
 		strcpy(names[i], tmp);
 	}
 	for (i = 0; i < n_names; i++) {
+		// initialize the adjacency list for the graph
 		adj_l_size[i] = n_links / n_names;
 		adj_l[i] = (int *)malloc(sizeof(int) * adj_l_size[i]);
+		// initialize the adjacency list for the transposed graph
 		adj_lT_size[i] = n_links / n_names;
 		adj_lT[i] = (int *)malloc(sizeof(int) * adj_lT_size[i]);
 	}
 	for (i = 0; i < n_links; i++) {
+		// input communication records
 		scanf("%s %s %s", tmp, tmp2, tmp3);
+		// convert names to array indices
 		j = nameToIndex(tmp);
 		k = nameToIndex(tmp3);
 
+		// dynamically allocate memory for the adjacency list
 		if (adj_l_ptr[j] >= adj_l_size[j]) {
-			adj_l_size[j] *= 2;
-			// adj_l[j] = (int *)realloc(adj_l[j], adj_l_size[j]);
+			adj_l_size[j] *= 2; // double the size
 			newptr = (int *)malloc(sizeof(int) * adj_l_size[j]);
+											   // allocate memory with new size
 			for (l = 0; l < adj_l_ptr[j]; l++) newptr[l] = adj_l[j][l];
-			free(adj_l[j]);
-			adj_l[j] = newptr;
+												 // copy the data to new memory
+			free(adj_l[j]); // free old memory block
+			adj_l[j] = newptr; // assign the new pointer
 		}
-		adj_l[j][adj_l_ptr[j]] = k;
-		adj_l_ptr[j]++;
+		adj_l[j][adj_l_ptr[j]] = k; // store the edge <j, k>
+		adj_l_ptr[j]++; // update current position in the list
 
+		// dynamically allocate memory for the adjacency list
 		if (adj_lT_ptr[k] >= adj_lT_size[k]) {
-			adj_lT_size[k] *= 2;
+			adj_lT_size[k] *= 2; // double the size
 			newptr = (int *)malloc(sizeof(int) * adj_lT_size[k]);
+											   // allocate memory with new size
 			for (l = 0; l < adj_lT_ptr[k]; l++) newptr[l] = adj_lT[k][l];
-			free(adj_lT[k]);
-			adj_lT[k] = newptr;
+												 // copy the data to new memory
+			free(adj_lT[k]); // free old memory block
+			adj_lT[k] = newptr; // assign the new pointer
 		}
-		adj_lT[k][adj_lT_ptr[k]] = j;
-		adj_lT_ptr[k]++;
+		adj_lT[k][adj_lT_ptr[k]] = j; // store the edge <k, j>
+		adj_lT_ptr[k]++; // update current position in the list
 	}
 }
 
@@ -129,11 +142,11 @@ int nameToIndex(char *name)
 
 double GetTime(void)						// get local time in seconds
 {
-	// struct timeval tv;						// variable to store time
+	struct timeval tv;						// variable to store time
 
-	// gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL);				// get local time
 
-	// return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
 void SCC()
