@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#define N 10
+#define N 100 // number of class in the hash table
 
+// structure to store the index whose name is in the same class
 typedef struct node {
 	int idx;
 	struct node *next;
@@ -30,11 +31,11 @@ int time_DFS; // DFS clock
 int *SCCs; // record nodes traversed by DFS
 int SCCs_ptr; // current position of SCCs
 int *C; // temporary array for CountingSort()
-Node **bucket;
+Node **bucket; // hash table
 
 void readData(); // read data, construct the graph and its transposed version
 int nameToIndex(char *name); // convert name to array index
-unsigned long hash(char *str);
+unsigned long hash(char *str); // hash function
 double GetTime(void); // get local time in seconds
 void SCC(); // find strongly connected components of a graph
 void DFS_Call(int **G, int *len, int *idx);
@@ -77,10 +78,10 @@ int main(void)
 void readData()
 {
 	int i, j, k, l; // indices
-	int class;
+	int class; // class of a name determined by the hash function
 	char tmp[20], tmp2[20], tmp3[20]; // temporary variable for input
 	int *newptr; // temporary pointer
-	Node *newNode;
+	Node *newNode; // temporary Node
 
 	// input number of people and communication records
 	scanf("%d %d", &n_names, &n_links);
@@ -97,15 +98,15 @@ void readData()
 		scanf("%s", tmp); // input names
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
 		strcpy(names[i], tmp);
-		class = hash(tmp) % N;
-		if (!bucket[class]) {
+		class = hash(tmp) % N; // decide the name's class
+		if (!bucket[class]) { // start of the linked list
 			bucket[class] = (Node *)malloc(sizeof(Node));
-			bucket[class]->idx = i;
+			bucket[class]->idx = i; // store the index at this class
 			bucket[class]->next = NULL;
 		}
-		else {
+		else { // this class already has data
 			newNode = (Node *)malloc(sizeof(Node));
-			newNode->idx = i;
+			newNode->idx = i; // store the index at this class
 			newNode->next = bucket[class];
 			bucket[class] = newNode;
 		}
@@ -155,12 +156,10 @@ void readData()
 
 int nameToIndex(char *name) // convert name to array index
 {
-	int class;
-	Node *tmp;
+	Node *tmp; // temporary Node
 
-	class = hash(name) % N;
-	tmp = bucket[class];
-	while (tmp) {
+	tmp = bucket[hash(name) % N];
+	while (tmp) { // return the index if the names are matched
 		if (!strcmp(name, names[tmp->idx])) return tmp->idx;
 		tmp = tmp->next;
 	}
@@ -168,7 +167,7 @@ int nameToIndex(char *name) // convert name to array index
 	return -1;
 }
 
-unsigned long hash(char *str)
+unsigned long hash(char *str) // hash function
 {
 	unsigned long hash = 5381;
 	int c;
