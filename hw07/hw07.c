@@ -18,9 +18,9 @@ int *adj_l_ptr;
 int **adj_lT;
 int *adj_lT_size;
 int *adj_lT_ptr;
-int *visited;
 int *f;
-int *keys;
+int *idx;
+int *visited;
 int time_DFS;
 int *SCCs;
 int SCCs_ptr;
@@ -30,17 +30,9 @@ void readData();
 int nameToIndex(char *name);
 double GetTime(void);	// get local time in seconds
 void SCC();
-void DFS_Call(int **G, int *len, int *order);
+void DFS_Call(int **G, int *len, int *idx);
 void DFS_d(int **G, int *len, int v);
-void InsertionSort(int *keys, int *values, int low, int high);
-void MergeSort(int *keys, int *values, int low, int high);
-void Merge(int *keys, int *values, int low, int mid, int high);
 void CountingSort(int *keys, int *values, int n, int k);
-void CountingSort2(int *keys, int *values, int n, int k);
-void Sort(int *list, int len);
-void QuickSort(int *list, int *f, int low, int high);
-int Partition(int *list, int low, int high);
-void Swap(int *list, int i, int j);
 void freeAll();
 
 int main(void)
@@ -150,55 +142,34 @@ void SCC()
 	double t0, t1, t2, t3, t4, t5;
 
 	t0 = GetTime();
-	visited = (int *)malloc(sizeof(int) * n_names);
 	f = (int *)malloc(sizeof(int) * n_names);
 	SCCs = (int *)calloc(n_names * 2 + 1, sizeof(int));
-	keys = (int *)malloc(sizeof(int) * n_names);
+	idx = (int *)malloc(sizeof(int) * n_names);
+	visited = (int *)malloc(sizeof(int) * n_names);
 	C = (int *)malloc(sizeof(int) * n_names);
 
-	for (i = 0; i < n_names; i++) keys[i] = i;
+	for (i = 0; i < n_names; i++) idx[i] = i;
 	t1 = GetTime();
-	printf("Key generate: %.5es\n", t1 - t0);
+	printf("Index init & malloc: %.5es\n", t1 - t0);
 
-	DFS_Call(adj_l, adj_l_ptr, keys);
+	DFS_Call(adj_l, adj_l_ptr, idx);
 	t2 = GetTime();
 	printf("First DFS: %.5es\n", t2 - t1);
-	
-	// Sort_Call(keys);
-	CountingSort(keys, f, n_names, n_names);
+
+	CountingSort(idx, f, n_names, n_names);
 	t3 = GetTime();
 	printf("Sort 1: %.5es\n", t3 - t2);
 
-	// for (i = 0; i < n_names; i++) Sort(adj_lT[i], adj_lT_ptr[i]);
-	for (i = 0; i < n_names; i++) CountingSort2(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
-	// for (i = 0; i < n_names; i++) CountingSort(adj_lT[i], f, adj_lT_ptr[i], n_names);
+	for (i = 0; i < n_names; i++) CountingSort(adj_lT[i], f, 0, adj_lT_ptr[i] - 1);
 	t4 = GetTime();
 	printf("Sort 2: %.5es\n", t4 - t3);
 
-	DFS_Call(adj_lT, adj_lT_ptr, keys);
+	DFS_Call(adj_lT, adj_lT_ptr, idx);
 	t5 = GetTime();
 	printf("Second DFS: %.5es\n", t5 - t4);
 }
 
-void Sort(int *list, int len)
-{
-	int j, i;							// index
-	int tmp_key, tmp_value;				// temporary char pointer
-
-	for (j = 1; j < len; j++) {	// assume list[0 : j - 1] already sorted
-		tmp_key = list[j];
-		tmp_value = f[list[j]];				// copy the word at index j
-		i = j - 1;					// initialize i with j - 1
-		// repeat until list[i] is smaller 
-		while ((i >= 0) && (tmp_value > f[list[i]])) {
-			list[i + 1] = list[i];
-			i--;					// move on to the next word
-		}
-		list[i + 1] = tmp_key;			// fill the word list[j] at index i + 1
-	}
-}
-
-void DFS_Call(int **G, int *len, int *order)
+void DFS_Call(int **G, int *len, int *idx)
 {
 	int i, j;
 
@@ -207,7 +178,7 @@ void DFS_Call(int **G, int *len, int *order)
 	SCCs_ptr = 0;
 	n_SCCs = 0;
 	for (i = 0; i < n_names; i++) {
-		j = order[i];
+		j = idx[i];
 		if (visited[j] == 0) {
 			SCCs[SCCs_ptr++] = -1;
 			n_SCCs++;
@@ -232,130 +203,17 @@ void DFS_d(int **G, int *len, int v)
 	f[v] = time_DFS++; // finish order
 }
 
-void InsertionSort(int *keys, int *values, int low, int high)
-{
-	int j, i;							// index
-	int tmp_key, tmp_value;				// temporary char pointer
-
-	for (j = low + 1; j <= high; j++) {	// assume list[0 : j - 1] already sorted
-		tmp_key = keys[j];
-		tmp_value = values[j];				// copy the word at index j
-		i = j - 1;					// initialize i with j - 1
-		// repeat until list[i] is smaller 
-		while ((i >= low) && (tmp_value > values[i])) {
-			keys[i + 1] = keys[i];
-			values[i + 1] = values[i];	// fill the previous word with current word
-			i--;					// move on to the next word
-		}
-		keys[i + 1] = tmp_key;			// fill the word list[j] at index i + 1
-		values[i + 1] = tmp_value;
-	}
-}
-
-void MergeSort(int *keys, int *values, int low, int high)
-{
-	int mid;
-
-	if (low < high) {
-		mid = (low + high) / 2;
-		MergeSort(keys, values, low, mid);
-		MergeSort(keys, values, mid + 1, high);
-		Merge(keys, values, low, mid, high);
-	}
-}
-
-void Merge(int *keys, int *values, int low, int mid, int high)
-{
-	int k;
-	int h = low; // index for lower half
-	int i = low; // index for B
-	int j = mid + 1; // index for upper half
-
-	while ((h <= mid) && (j <= high)) {
-		if (values[h] >= values[j]) {
-			keys[i] = h;
-			h++;
-		}
-		else {
-			keys[i] = j;
-			j++;
-		}
-		i++;
-	}
-	if (h > mid) {
-		for (k = j; k <= high; k++) {
-			keys[i] = k;
-			i++;
-		}
-	}
-	else {
-		for (k = h; k <= mid; k++) {
-			keys[i] = k;
-			i++;
-		}
-	}
-}
-
-void CountingSort(int *keys, int *values, int n, int k)
+void CountingSort(int *idx, int *key, int n, int k)
 {
 	int i;
 
 	for (i = 0; i < k; i++) C[i] = 0;
-	for (i = 0; i < n; i++) C[values[i]]++;
+	for (i = 0; i < n; i++) C[key[idx[i]]]++;
 	for (i = 1; i < k; i++) C[i] += C[i - 1];
 	for (i = n - 1; i >= 0; i--) {
-		keys[i] = n - (C[values[i]] - 1) - 1;
-		C[values[i]]--;
+		idx[i] = n - (C[key[idx[i]]] - 1) - 1;
+		C[key[idx[i]]]--;
 	}
-}
-
-void CountingSort2(int *keys, int *values, int n, int k)
-{
-	int i;
-
-	for (i = 0; i < k; i++) C[i] = 0;
-	// for (i = 0; i < n; i++) C[values[i]]++;
-	for (i = 0; i < n; i++) C[values[keys[i]]]++;
-	for (i = 1; i < k; i++) C[i] += C[i - 1];
-	for (i = n - 1; i >= 0; i--) {
-		// keys[i] = n - (C[values[i]] - 1) - 1;
-		keys[i] = n - (C[values[keys[i]]] - 1) - 1;
-		C[values[keys[i]]]--;
-	}
-}
-
-void QuickSort(int *list, int *f, int low, int high)
-{
-	int mid;
-
-	if (low < high) {
-		mid = Partition(list, low, high);
-		QuickSort(list, f, low, mid - 1);
-		QuickSort(list, f, mid + 1, high);
-	}
-}
-
-int Partition(int *list, int low, int high)
-{
-	int v, vf, i, j;
-
-	v = list[low];
-	vf = f[v]; i = low; j = high;
-	do {
-		do {i++;} while ((f[list[i]] > vf) && (i < high));
-		do {j--;} while ((f[list[j]] < vf) && (j > low));
-		if (i < j) Swap(list, i, j);
-	} while (i < j);
-	list[low] = list[j]; list[j] = v;
-
-	return j;
-}
-
-void Swap(int *list, int i, int j)
-{
-	int tmp = list[i];
-
-	list[i] = list[j]; list[j] = tmp;
 }
 
 void freeAll()
@@ -368,11 +226,15 @@ void freeAll()
 		free(adj_lT[i]);
 	}
 	free(names);
-	free(adj_l); free(adj_l_size); free(adj_l_ptr);
-	free(adj_lT); free(adj_lT_size); free(adj_lT_ptr);
+	free(adj_l);
+	free(adj_l_size);
+	free(adj_l_ptr);
+	free(adj_lT);
+	free(adj_lT_size);
+	free(adj_lT_ptr);
 	free(visited);
 	free(f);
-	free(keys);
+	free(idx);
 	free(SCCs);
 	free(C);
 }
