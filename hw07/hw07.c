@@ -6,6 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#define N 10
+
+typedef struct node {
+	int idx;
+	struct node *next;
+} Node;
 
 int n_names; // number of people
 int n_links; // number of communication records
@@ -24,9 +30,11 @@ int time_DFS; // DFS clock
 int *SCCs; // record nodes traversed by DFS
 int SCCs_ptr; // current position of SCCs
 int *C; // temporary array for CountingSort()
+Node **bucket;
 
 void readData(); // read data, construct the graph and its transposed version
 int nameToIndex(char *name); // convert name to array index
+unsigned long hash(char *str);
 double GetTime(void); // get local time in seconds
 void SCC(); // find strongly connected components of a graph
 void DFS_Call(int **G, int *len, int *idx);
@@ -47,7 +55,7 @@ int main(void)
 	SCC(); // find strongly connected components of a graph
 	end = GetTime(); // end time
 	// print out input information, execution time
-	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, start - end);
+	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, end - start);
 	printf("Number of subgroups: %d\n", n_SCCs); // print out number of groups
 	for (i = 0; SCCs[i] != -2; i++) { // print out member of groups
 		if (i == 0) {
@@ -69,8 +77,10 @@ int main(void)
 void readData()
 {
 	int i, j, k, l; // indices
+	int class;
 	char tmp[20], tmp2[20], tmp3[20]; // temporary variable for input
 	int *newptr; // temporary pointer
+	Node *newNode;
 
 	// input number of people and communication records
 	scanf("%d %d", &n_names, &n_links);
@@ -82,10 +92,23 @@ void readData()
 	adj_lT = (int **)malloc(sizeof(int *) * n_names);
 	adj_lT_size = (int *)malloc(sizeof(int) * n_names);
 	adj_lT_ptr = (int *)calloc(n_names, sizeof(int));
+	bucket = (Node **)calloc(N, sizeof(Node *));
 	for (i = 0; i < n_names; i++) {
 		scanf("%s", tmp); // input names
 		names[i] = (char *)malloc(sizeof(char) * (3 * strlen(tmp) + 1));
 		strcpy(names[i], tmp);
+		class = hash(tmp) % N;
+		if (!bucket[class]) {
+			bucket[class] = (Node *)malloc(sizeof(Node));
+			bucket[class]->idx = i;
+			bucket[class]->next = NULL;
+		}
+		else {
+			newNode = (Node *)malloc(sizeof(Node));
+			newNode->idx = i;
+			newNode->next = bucket[class];
+			bucket[class] = newNode;
+		}
 	}
 	for (i = 0; i < n_names; i++) {
 		// initialize the adjacency list for the graph
@@ -132,22 +155,38 @@ void readData()
 
 int nameToIndex(char *name) // convert name to array index
 {
-	int i; // loop index
+	int class;
+	Node *tmp;
 
-	for (i = 0; i < n_names; i++) {
-		 // find the index whose value is the same as name
-		if (!strcmp(name, names[i])) return i;
+	class = hash(name) % N;
+	tmp = bucket[class];
+	while (tmp) {
+		if (!strcmp(name, names[tmp->idx])) return tmp->idx;
+		tmp = tmp->next;
 	}
+
 	return -1;
+}
+
+unsigned long hash(char *str)
+{
+	unsigned long hash = 5381;
+	int c;
+
+	while ((c = *str++)) {
+		hash = ((hash << 5) + hash) + c;
+	}
+
+	return hash;
 }
 
 double GetTime(void)						// get local time in seconds
 {
-	// struct timeval tv;						// variable to store time
+	struct timeval tv;						// variable to store time
 
-	// gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL);				// get local time
 
-	// return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
 void SCC() // find strongly connected components of a graph
@@ -167,16 +206,8 @@ void SCC() // find strongly connected components of a graph
 	// traverse the graph in the given order
 	DFS_Call(adj_l, adj_l_ptr, idx);
 
-	for (i = 0; i < n_names; i++) printf("%d ", i);
-	printf("\n");
-	for (i = 0; i < n_names; i++) printf("%d ", f[i]);
-	printf("\n");
-
 	// sort the index using the array f as key (decreasing order)
 	CountingSort(idx, f, n_names, n_names);
-
-	for (i = 0; i < n_names; i++) printf("%d ", idx[i]);
-	printf("\n");
 
 	// sort the adjacency list of the transposed graph in-place
 	// using the array f as key (decreasing order)
@@ -228,7 +259,7 @@ void DFS_d(int **G, int *len, int v) // DFS from vertex v of the graph G
 // sort the idx by its key using counting sort
 void CountingSort(int *idx, int *key, int n, int k)
 {
-	int i, j; // loop index
+	int i; // loop index
 	int tmp, tmp_idx; // temporary variable
 
 	for (i = 0; i < k; i++) C[i] = 0; // initialize C to all 0
@@ -251,12 +282,21 @@ void CountingSort(int *idx, int *key, int n, int k)
 void freeAll() // free all allocated memory
 {
 	int i; // loop index
+	Node *tmp, *next;
 
 	for (i = 0; i < n_names; i++) {
 		free(names[i]);
 		free(adj_l[i]);
 		free(adj_lT[i]);
 	}
+	for (i = 0; i < N; i++) {
+		tmp = bucket[i];
+		while (tmp) {
+			next = tmp->next;
+			free(tmp);
+			tmp = next;
+		}
+	} 
 	free(names);
 	free(adj_l);
 	free(adj_l_size);
@@ -269,4 +309,5 @@ void freeAll() // free all allocated memory
 	free(idx);
 	free(SCCs);
 	free(C);
+	free(bucket);
 }
