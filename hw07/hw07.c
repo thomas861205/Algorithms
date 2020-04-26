@@ -55,8 +55,9 @@ int main(void)
 	start = GetTime(); // start time
 	SCC(); // find strongly connected components of a graph
 	end = GetTime(); // end time
-	// print out input information, execution time
-	printf("N = %d M = %d CPU time = %.5e\n", n_names, n_links, end - start);
+	// print out input information, number of subgroups and execution time
+	printf("N = %d M = %d Subgroup = %d ", n_names, n_links, n_SCCs);
+	printf("CPU time = %.5e\n", end - start);
 	printf("Number of subgroups: %d\n", n_SCCs); // print out number of groups
 	for (i = 0; SCCs[i] != -2; i++) { // print out member of groups
 		if (i == 0) {
