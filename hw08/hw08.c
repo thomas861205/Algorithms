@@ -24,36 +24,29 @@ typedef struct day {
 	int option;
 } DAY;
 
-int N;
-int c_sum;
-int n_selected;
-int *choice;
-int grid[65];
+int N; // number of courses
+int c_sum = 0; // sum of credits
+int n_selected = 0; // number of courses selected
+int *selected;
 COURSE *courses;
 
 void readData(void);
 void printData(void);
-void solve(void);
-void solve2(void);
-void solve3(void);
-void updateAdv(NODE *occupy[], int *selected);
+void BestInGreedy(void);
+void BestInGreedy2(void);
+// void solve3(void);
+// void updateAdv(NODE *occupy[], int *selected);
 void InsertionSort(COURSE *A, int n, int dec);
 void InsertionSort2(DAY A[], int n, int dec);
+void freeAll(void);
 
 int main(void)
 {
 	int i;
 
 	readData();
-	InsertionSort(courses, n, 0);
 	// printData();
-	c_sum = 0;
-	n_selected = 0;
-	choice = (int *)calloc(n, sizeof(int));
-	for (i = 0; i < 65; i++) grid[i] = 0;
-	// solve();
-	solve2();
-	// solve3();
+	BestInGreedy();
 
 	return 0;
 }
@@ -121,8 +114,8 @@ void readData(void) // read input data
 	for (i = 0; i < N; i++) {
 		scanf("%s", tmp); // input course number
 		// allocate memory for course number
-		courses[i].number = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
-		strcpy(courses[i].number, tmp);
+		courses[i].crs_num = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
+		strcpy(courses[i].crs_num, tmp);
 
 		// input course credits and class capacity
 		scanf(" %d %d ", &courses[i].credits, &courses[i].capacity);
@@ -167,7 +160,6 @@ void readData(void) // read input data
 		// allocate memory for course name
 		courses[i].name = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
 		strcpy(courses[i].name, tmp);
-		courses[i].ratio = (float)courses[i].credits / courses[i].n_class;
 	}
 }
 
@@ -175,43 +167,52 @@ void printData(void)
 {
 	int i, j;
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < N; i++) {
 		printf("%d: ", i + 1);
-		printf("%s ", courses[i].number);
+		printf("%s ", courses[i].crs_num);
 		printf("%d %d ", courses[i].credits, courses[i].capacity);
 		// for (j = 0; j < courses[i].n_class; j++) printf("%d-", courses[i].time[j]);
 		printf("%s", courses[i].time_str);
 		printf(" %s", courses[i].name);
-		printf(" %.3f", courses[i].ratio);
+		// printf(" %.3f", courses[i].ratio);
 		printf("\n");
 	}
 }
 
-void solve(void)
+
+void BestInGreedy(void)
 {
-	int i, j;
+	int i, j; // indices
+	int feas; // loop flag
+	int occupied[65]; // time occupied
 	int cnt = 0;
-	int ok;
 	char weekName[] = {'M', 'T', 'W', 'R', 'F'};
 
-	for (i = 0; i < n; i++) {
-		ok = 1;
-		for (j = 0; j < courses[i].n_class && ok; j++) {
-			if (grid[courses[i].time[j]] == 1) ok = 0;
+	for (i = 0; i < 65; i++) occupied[i] = 0; // initialize
+	selected = (int *)calloc(N, sizeof(int)); // choice of courses
+
+	InsertionSort(courses, N, 1);
+	for (i = 0; i < N; i++) { // try all courses
+		feas = 1;
+		for (j = 0; j < courses[i].n_class && feas; j++) {
+			// check if courses[i] overlaps with other selected courses
+			if (occupied[courses[i].time[j]] == 1) feas = 0;
 		}
-		if (ok) {
-			choice[i] = 1; n_selected++;
+		if (feas) { // courses[i] is feasible
+			selected[i] = 1;
+			n_selected++;
+			// update the occupied time
 			for (j = 0; j < courses[i].n_class; j++) {
-				grid[courses[i].time[j]] = 1;
+				occupied[courses[i].time[j]] = 1;
 			}
-			c_sum += courses[i].credits;
+			c_sum += courses[i].credits; // accumulate the credits
 		}
 	}
 	printf("Total credits: %d\n", c_sum);
 	printf("Number of courses selected: %d\n", n_selected);
 	for (i = 0; i < 65; i++) {
-		if (choice[i] == 1) {
-			printf("%d: %s %d %s %s\n", ++cnt, courses[i].number, 
+		if (selected[i] == 1) {
+			printf("%d: %s %d %s %s\n", ++cnt, courses[i].crs_num, 
 				courses[i].credits, courses[i].time_str, courses[i].name);
 		}
 	}
@@ -220,7 +221,7 @@ void solve(void)
 	for (i = 0; i < 5; i++) {
 		printf("%c ", weekName[i]);
 		for (j = 0; j < 13; j++) {
-			if (grid[13 * i + j] == 1) printf("V");
+			if (occupied[13 * i + j] == 1) printf("V");
 			else printf(".");
 			if (j != 12) printf(" ");
 			else printf("\n");
@@ -228,70 +229,55 @@ void solve(void)
 	}
 }
 
-void solve2(void)
+/*
+void BestInGreedy2(void)
 {
 	int i, j, k;
-	int t;
+	int t; // temporary variable to store time index
 	int c_sum = 0;
 	int cnt = 0;
-	NODE *occupy[65];
-	NODE *tmp;
-	int *selected = calloc(n, sizeof(int));
-	char weekName[] = {'M', 'T', 'W', 'R', 'F'};
+	int *selected = calloc(N, sizeof(int));
 	int done;
 	int ok;
-	DAY order[65];
+	int occupied[65];
+	char weekName[] = {'M', 'T', 'W', 'R', 'F'};
+	NODE *has_crs[65];
+	NODE *tmp;
 
-	for (i = 0; i < 65; i++) occupy[i] = NULL;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < 65; i++) { // initialize
+		has_crs[i] = NULL;
+		occupied[i] = 0;
+	}
+	for (i = 0; i < N; i++) { // for all courses
 		for (j = 0; j < courses[i].n_class; j++) {
-			t = courses[i].time[j];
-			if (occupy[t] == NULL) {
-				occupy[t] = (NODE *)malloc(sizeof(NODE));
-				occupy[t]->data = i;
-				occupy[t]->next = NULL;
+			t = courses[i].time[j]; // class time
+			if (has_crs[t] == NULL) { // first course of the list
+				has_crs[t] = (NODE *)malloc(sizeof(NODE));
+				has_crs[t]->data = i; // at time t has courses[i]
+				has_crs[t]->next = NULL;
 			}
 			else {
 				tmp = (NODE *)malloc(sizeof(NODE));
-				tmp->data = i;
-				tmp->next = occupy[t];
-				occupy[t] = tmp;
+				tmp->data = i; // at time t has courses[i]
+				tmp->next = has_crs[t];
+				has_crs[t] = tmp;
 			}
 		}
 	}
+
 	for (i = 0; i < 65; i++) {
-		order[i].idx = i;
-		tmp = occupy[i];
-		cnt = 0;
-		while (tmp != NULL) {
-			// printf("%d ", tmp->data);
-			cnt++;
-			tmp = tmp->next;
-		}
-		// printf("%d %d \n", i, cnt);
-		order[i].option = cnt;
-	}
-
-	// InsertionSort2(order, 65, 0);
-	// for (i = 0; i < 65; i++) printf("%d %d\n", order[i].idx, order[i].option);
-
-	cnt = 0;
-	for (k = 0; k < 65; k++) {
-		i = order[k].idx;
-		// i = 65 - k;
-		// i = k;
-		if (grid[i] == 0) {
-			tmp = occupy[i];
+		if (occupied[i] == 0) {
+			tmp = has_crs[i];
 			done = 0;
 			while (!done && (tmp != NULL)) {
 				if (selected[tmp->data] == 0) {
 					ok = 1;
 					for (j = 0; j < courses[tmp->data].n_class && ok; j++) {
-						if (grid[courses[tmp->data].time[j]] == 1) ok = 0;
+						if (occupied[courses[tmp->data].time[j]] == 1) ok = 0;
 					}
 					if (ok) {
 						for (j = 0; j < courses[tmp->data].n_class; j++) {
-							grid[courses[tmp->data].time[j]] = 1;
+							occupied[courses[tmp->data].time[j]] = 1;
 						}
 						selected[tmp->data] = 1;
 						c_sum += courses[tmp->data].credits;
@@ -310,7 +296,7 @@ void solve2(void)
 	printf("Number of courses selected: %d\n", n_selected);
 	for (i = 0; i < 65; i++) {
 		if (selected[i] == 1) {
-			printf("%d: %s %d %s %s\n", ++cnt, courses[i].number, 
+			printf("%d: %s %d %s %s\n", ++cnt, courses[i].crs_num, 
 				courses[i].credits, courses[i].time_str, courses[i].name);
 		}
 	}
@@ -319,14 +305,16 @@ void solve2(void)
 	for (i = 0; i < 5; i++) {
 		printf("%c ", weekName[i]);
 		for (j = 0; j < 13; j++) {
-			if (grid[13 * i + j] == 1) printf("V");
+			if (occupied[13 * i + j] == 1) printf("V");
 			else printf(".");
 			if (j != 12) printf(" ");
 			else printf("\n");
 		}
 	}
 }
+*/
 
+/*
 void solve3(void)
 {
 	int i, j, k;
@@ -485,3 +473,4 @@ void updateAdv(NODE *occupy[], int *selected)
 		}
 	}
 }
+*/

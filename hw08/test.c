@@ -45,14 +45,14 @@ int main(void)
 	int i;
 
 	readData();
-	InsertionSort(courses, n, 0);
+	InsertionSort(courses, n, 1);
 	// printData();
 	c_sum = 0;
 	n_selected = 0;
 	choice = (int *)calloc(n, sizeof(int));
 	for (i = 0; i < 65; i++) grid[i] = 0;
-	// solve();
-	solve2();
+	solve();
+	// solve2();
 	// solve3();
 
 	return 0;
