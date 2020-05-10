@@ -3,13 +3,13 @@
 #include <string.h>
 
 typedef struct course {
-	char *crs_num; // course number
-	int credits; // course credits
-	int capacity; // class capacity
-	int  n_class; // number of classes per week
-	char *time_str; // raw class times
-	int *time; // decoded class times
-	char *name; // course name
+	char *number;
+	int credits;
+	int capacity;
+	int  n_class;
+	int *time;
+	char *time_str;
+	char *name;
 	float adv;
 	float ratio;
 } COURSE;
@@ -24,7 +24,7 @@ typedef struct day {
 	int option;
 } DAY;
 
-int N;
+int n;
 int c_sum;
 int n_selected;
 int *choice;
@@ -108,41 +108,33 @@ void InsertionSort2(DAY *A, int n, int dec)
 	}
 }
 
-void readData(void) // read input data
+void readData(void)
 {
-	int i, j, k; // indices
-	int w, t; // day of week, time of day
+	int i, j;
+	int w, t;
+	int cnt;
 	char tmp[100];
 	char ch;
 
-	scanf("%d\n", &N); // input number of courses
-	// allocate memory for course infomation
-	courses = (COURSE *)malloc(sizeof(COURSE) * N);
-	for (i = 0; i < N; i++) {
-		scanf("%s", tmp); // input course number
-		// allocate memory for course number
+	scanf("%d\n", &n);
+	courses = (COURSE *)malloc(sizeof(COURSE) * n);
+	for (i = 0; i < n; i++) {
+		scanf("%s", tmp);
 		courses[i].number = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
 		strcpy(courses[i].number, tmp);
-
-		// input course credits and class capacity
 		scanf(" %d %d ", &courses[i].credits, &courses[i].capacity);
-
-		scanf("%s ", tmp); // input class times
-		// allocate memory for raw class times
-		courses[i].time_str = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
-		strcpy(courses[i].time_str, tmp);
-		courses[i].n_class = strlen(tmp) / 2; // get number of classes per week
-		// allocate memory for decoded class time
+		scanf("%s ", tmp);
+		courses[i].n_class = strlen(tmp) / 2;
 		courses[i].time = (int *)malloc(sizeof(int) * courses[i].n_class);
-		for (j = 0; j < strlen(tmp); j += 2) { // decode the class time string
-			switch(tmp[j]) { // decide day of the week
+		for (j = 0; j < strlen(tmp); j += 2) {
+			switch(tmp[j]) {
 				case 'M': w = 0; break;
 				case 'T': w = 1; break;
 				case 'W': w = 2; break;
 				case 'R': w = 3; break;
 				case 'F': w = 4; break;
 			}
-			switch(tmp[j + 1]) { // decide time of the day
+			switch(tmp[j + 1]) {
 				case '1': t = 0; break;
 				case '2': t = 1; break;
 				case '3': t = 2; break;
@@ -157,14 +149,17 @@ void readData(void) // read input data
 				case 'b': t = 11; break;
 				case 'c': t = 12; break;
 			}
-			courses[i].time[j / 2] = 13 * w + t; // express linearly
+			// printf("%d-%d ", w, t);
+			courses[i].time[j / 2] = 13 * w + t;
 		}
-
-		k = 0;
-		// store the rest of characters of the line
-		while ((ch=getchar()) != '\n') tmp[k++] = ch;
-		tmp[k] = '\0';
-		// allocate memory for course name
+		// printf("\n");
+		courses[i].time_str = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
+		strcpy(courses[i].time_str, tmp);
+		cnt = 0;
+		while ((ch=getchar()) != '\n') {
+			tmp[cnt++] = ch;
+		}
+		tmp[cnt] = '\0';
 		courses[i].name = (char *)malloc(sizeof(char) * (strlen(tmp) + 1));
 		strcpy(courses[i].name, tmp);
 		courses[i].ratio = (float)courses[i].credits / courses[i].n_class;
@@ -288,6 +283,7 @@ void solve2(void)
 					ok = 1;
 					for (j = 0; j < courses[tmp->data].n_class && ok; j++) {
 						if (grid[courses[tmp->data].time[j]] == 1) ok = 0;
+						// else grid[courses[tmp->data].time[j]] = 1;
 					}
 					if (ok) {
 						for (j = 0; j < courses[tmp->data].n_class; j++) {
@@ -299,6 +295,19 @@ void solve2(void)
 						printf("%d %d %s\n", i, tmp->data, courses[tmp->data].name);
 						printf("%s\n", courses[tmp->data].time_str);
 						done = 1;
+					
+
+						// printf("  1 2 3 4 n 5 6 7 8 9 a b c\n");
+						// for (i = 0; i < 5; i++) {
+						// 	printf("%c ", weekName[i]);
+						// 	for (j = 0; j < 13; j++) {
+						// 		if (grid[13 * i + j] == 1) printf("V");
+						// 		else printf(".");
+						// 		if (j != 12) printf(" ");
+						// 		else printf("\n");
+						// 	}
+						// } printf("\n");
+
 					}
 					else tmp = tmp->next;
 				}
