@@ -1,3 +1,7 @@
+// EE3980 HW08 Selecting Courses
+// 105061110, 周柏宇
+// 2020/05/10
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,7 +90,7 @@ void readData(void) // read input data
 	char ch; // temporary variable
 
 	scanf("%d\n", &N); // input number of courses
-	// allocate memory for course infomation
+	// allocate memory for course information
 	courses = (COURSE *)malloc(sizeof(COURSE) * N);
 	for (i = 0; i < N; i++) {
 		scanf("%s", tmp); // input course number
@@ -127,7 +131,7 @@ void readData(void) // read input data
 				case 'b': t = 11; break;
 				case 'c': t = 12; break;
 			}
-			courses[i].time[j / 2] = 13 * w + t; // express linearly
+			courses[i].time[j / 2] = 13 * w + t; // express the time linearly
 		}
 
 		k = 0;
@@ -140,7 +144,7 @@ void readData(void) // read input data
 	}
 }
 
-void BestInGreedy(void)
+void BestInGreedy(void) // best-in greedy algorithm
 {
 	int i, j; // indices
 	int feas; // loop flag
@@ -151,7 +155,7 @@ void BestInGreedy(void)
 	selected = (int *)calloc(N, sizeof(int));
 	for (i = 0; i < 65; i++) occupied[i] = 0;
 
-	Sort(courses);
+	Sort(); // sort courses wrt their credits in non-ascending order
 	for (i = 0; i < N; i++) { // try all courses
 		feas = 1;
 		for (j = 0; j < courses[i].n_class && feas; j++) {
@@ -173,7 +177,6 @@ void BestInGreedy(void)
 void freeAll(void) // free allocated memory
 {
 	int i;
-	COURSE *tmp;
 
 	for (i = 0; i < N; i++) {
 		free(courses[i].crs_num);
