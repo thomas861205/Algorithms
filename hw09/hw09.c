@@ -12,7 +12,7 @@ NODE *bst = NULL;
 NODE **bst_array;
 int n_node = 0;
 int bst_idx = 0;
-int heap_idx;
+int n_heap;
 
 NODE *bst_find(char ch);
 void bst_insert(char ch);
@@ -23,14 +23,15 @@ void minHeapify(NODE **list, int i, int n);
 void array_to_minHeap(NODE **list, int n);
 void HeapSort(NODE **list, int n); // nondecreasing
 NODE *minHeapRemoveMin(NODE **list, int n);
-void minHeapInsertion(NODE **list, NODE *item);
+void minHeapInsertion(NODE **list, int n, NODE *item);
+void printHeap(NODE **list, int n);
 
 int main(void)
 {
 	int i, j;
 	char ch;
 	int n_ch = 0;
-	NODE *tmp;
+	NODE *tmp, *tmp2, *new_node;
 
 	while ((ch = getchar()) != EOF) {
 		n_ch++;
@@ -43,15 +44,27 @@ int main(void)
 	// printf("unique char: %d\n", n_node);
 	bst_to_array(bst);
 	// HeapSort(bst_array, n_node);
+	array_to_minHeap(bst_array, n_node);
 	// for (i = 0; i < n_node; i++) printf("%c: %d\n", bst_array[i]->ch, bst_array[i]->n_ch);
-	heap_idx = n_node;
-	for (i = 0; i < n_node; i++) {
-		// tmp = minHeapRemoveMin(bst_array, heap_idx);
-		// printf("-> %d\n", tmp->n_ch);
-		// heap_idx--;
-		// for (j = 0; j < n_node; j++) printf("%d ", bst_array[j]->n_ch);
-		// printf("\n");
+	n_heap = n_node;
+	// for (i = 0; i < n_node; i++) {
+	// 	tmp = minHeapRemoveMin(bst_array, n_heap--);
+	// 	printHeap(bst_array, n_node);
+	// 	printf("-> %d\n", tmp->n_ch);
+	// }
+	printHeap(bst_array, n_heap);
+	while (n_heap >= 2) {
+		tmp = minHeapRemoveMin(bst_array, n_heap--);
+		tmp2 = minHeapRemoveMin(bst_array, n_heap--);
+		new_node = (NODE *)malloc(sizeof(NODE));
+		new_node->ch = -1;
+		new_node->n_ch = tmp->n_ch + tmp2->n_ch;
+		new_node->l = tmp;
+		new_node->r = tmp2;
+		minHeapInsertion(bst_array, ++n_heap, new_node);
+		printHeap(bst_array, n_heap);
 	}
+	// printHeap(bst_array, n_heap);
 	printf("Number of Chars read: %d\n", n_ch);
 	return 0;
 }
@@ -150,8 +163,8 @@ void minHeapify(NODE **list, int i, int n)
 	tmp = list[i];
 	done = 0;
 	while ((j <= n - 1) && (!done)) {
-		if ((j < n - 1) && (list[j]->n_ch < list[j + 1]->n_ch)) j++;
-		if (tmp->n_ch > list[j]->n_ch) done = 1;
+		if ((j < n - 1) && (list[j]->n_ch > list[j + 1]->n_ch)) j++;
+		if (tmp->n_ch < list[j]->n_ch) done = 1;
 		else {
 			list[(j + 1) / 2 - 1] = list[j];
 			j = 2 * (j + 1) - 1;
@@ -188,17 +201,32 @@ void HeapSort(NODE **list, int n)
 }
 
 NODE *minHeapRemoveMin(NODE **list, int n) {
-	int j;
 	NODE *tmp;
 
 	if (list == NULL) return NULL;
 	tmp = list[0];
 	list[0] = list[n - 1];
-	maxHeapify(list, 0, n - 1);
-	for (j = 0; j < n; j++) printf("%d ", list[j]->n_ch);
-	// printf("\n");
+	minHeapify(list, 0, n - 1);
 
 	return tmp;
 }
 
-void minHeapInsertion(NODE **list, NODE *item);
+void minHeapInsertion(NODE **list, int n, NODE *item)
+{
+	int i;
+
+	i = n - 1;
+	list[n - 1] = item;
+	while ((i > 0) && (list[(i + 1) / 2 - 1]->n_ch > item->n_ch)) {
+		list[i] = list[(i + 1) / 2 - 1];
+		i = (i + 1) / 2 - 1;
+	}
+	list[i] = item;
+}
+
+void printHeap(NODE **list, int n) {
+	int j;
+
+	for (j = 0; j < n; j++) printf("%d ", list[j]->n_ch);
+	printf("\n");
+}
