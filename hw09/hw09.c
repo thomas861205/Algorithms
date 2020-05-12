@@ -13,6 +13,7 @@ NODE **bst_array;
 int n_node = 0;
 int bst_idx = 0;
 int n_heap;
+int *code;
 
 NODE *bst_find(char ch);
 void bst_insert(char ch);
@@ -25,6 +26,7 @@ void HeapSort(NODE **list, int n); // nondecreasing
 NODE *minHeapRemoveMin(NODE **list, int n);
 void minHeapInsertion(NODE **list, int n, NODE *item);
 void printHeap(NODE **list, int n);
+void printHuffmanCode(NODE *node, int i, int bit);
 
 int main(void)
 {
@@ -52,7 +54,7 @@ int main(void)
 	// 	printHeap(bst_array, n_node);
 	// 	printf("-> %d\n", tmp->n_ch);
 	// }
-	printHeap(bst_array, n_heap);
+	// printHeap(bst_array, n_heap);
 	while (n_heap >= 2) {
 		tmp = minHeapRemoveMin(bst_array, n_heap--);
 		tmp2 = minHeapRemoveMin(bst_array, n_heap--);
@@ -62,9 +64,10 @@ int main(void)
 		new_node->l = tmp;
 		new_node->r = tmp2;
 		minHeapInsertion(bst_array, ++n_heap, new_node);
-		printHeap(bst_array, n_heap);
+		// printHeap(bst_array, n_heap);
 	}
 	// printHeap(bst_array, n_heap);
+	printHuffmanCode(bst_array[0], 0, -1);
 	printf("Number of Chars read: %d\n", n_ch);
 	return 0;
 }
@@ -229,4 +232,28 @@ void printHeap(NODE **list, int n) {
 
 	for (j = 0; j < n; j++) printf("%d ", list[j]->n_ch);
 	printf("\n");
+}
+
+void printHuffmanCode(NODE *node, int i, int bit)
+{
+	int j;
+
+	if (bit == -1) {
+		code = (int *)malloc(sizeof(int) * (n_node - 1));
+		for (j = 0; j < (n_node - 1); j++) code[j] = -1;
+	}
+	else code[i - 1] = bit;
+
+	// printf("%d: ", node->n_ch);
+	// for (j = 0; j < i; j++) printf("%d", code[j]);
+	// printf("\n");
+	if (node->ch != -1) {
+		printf("%d: ", node->n_ch);
+		for (j = 0; j < i; j++) printf("%d", code[j]);
+		printf("\n");
+	}
+	else {
+		printHuffmanCode(node->l, i + 1, 0);
+		printHuffmanCode(node->r, i + 1, 1);
+	}
 }
