@@ -35,8 +35,8 @@ int main(void)
 	return 0;
 }
 
-void print(int *A, int n)
-{
+void print(int *A, int n) {
+
 	int i;
 
 	for (i = 0; i < n; i++) printf("%d ", A[i]);
@@ -108,6 +108,7 @@ void BubbleSort(int *A, int n, int dec)
 		}
 	}
 }
+
 
 void ShakerSort(int *A, int n, int dec)
 {
@@ -259,10 +260,12 @@ void merge(int *A, int *B, int low, int mid,  int high, int dec)
 	}
 }
 
+
 void QuickSort(int *A, int n, int dec)
 {
 	quicksort(A, 0, n - 1, dec);
 }
+
 
 void quicksort(int *A, int low, int high, int dec)
 {
