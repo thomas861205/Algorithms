@@ -1,3 +1,7 @@
+// EE3980 HW09 Encoding ASCII Texts
+// 105061110, 周柏宇
+// 2020/05/13
+
 #include <stdio.h>
 #include <stdlib.h>
 #define bit2byte(x) (x % 8 ? x / 8 + 1: x / 8)
@@ -19,44 +23,29 @@ int n_bit = 0;
 
 NODE *bst_find(char ch);
 void bst_insert(char ch);
-void bst_traverse(NODE *node);
 void bst_to_array(NODE *node);
-void maxHeapify(NODE **list, int i, int n);
 void minHeapify(NODE **list, int i, int n);
 void array_to_minHeap(NODE **list, int n);
-void HeapSort(NODE **list, int n); // nondecreasing
 NODE *minHeapRemoveMin(NODE **list, int n);
 void minHeapInsertion(NODE **list, int n, NODE *item);
-void printHeap(NODE **list, int n);
 void printHuffmanCode(NODE *node, int i, int bit);
+void freeHeap(NODE *node);
 
 int main(void)
 {
-	int i, j;
 	char ch;
 	int n_ch = 0;
 	NODE *tmp, *tmp2, *new_node;
 
 	while ((ch = getchar()) != EOF) {
 		n_ch++;
-		// printf("%d\n", ch);
 		tmp = bst_find(ch);
 		if (tmp == NULL) bst_insert(ch);
 		else tmp->n_ch++;
 	}
-	// bst_traverse(bst);
-	// printf("unique char: %d\n", n_node);
 	bst_to_array(bst);
-	// HeapSort(bst_array, n_node);
 	array_to_minHeap(bst_array, n_node);
-	// for (i = 0; i < n_node; i++) printf("%c: %d\n", bst_array[i]->ch, bst_array[i]->n_ch);
 	n_heap = n_node;
-	// for (i = 0; i < n_node; i++) {
-	// 	tmp = minHeapRemoveMin(bst_array, n_heap--);
-	// 	printHeap(bst_array, n_node);
-	// 	printf("-> %d\n", tmp->n_ch);
-	// }
-	// printHeap(bst_array, n_heap);
 	while (n_heap >= 2) {
 		tmp = minHeapRemoveMin(bst_array, n_heap--);
 		tmp2 = minHeapRemoveMin(bst_array, n_heap--);
@@ -66,13 +55,16 @@ int main(void)
 		new_node->l = tmp;
 		new_node->r = tmp2;
 		minHeapInsertion(bst_array, ++n_heap, new_node);
-		// printHeap(bst_array, n_heap);
 	}
-	// printHeap(bst_array, n_heap);
 	printHuffmanCode(bst_array[0], 0, -1);
 	printf("Number of Chars read: %d\n", n_ch);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, bit2byte(n_bit));
 	printf("  Ratio = %.4f %%\n", n_bit / (8.0 * n_ch) * 100);
+
+	free(code);
+	freeHeap(bst_array[0]);
+	free(bst_array);
+
 	return 0;
 }
 
@@ -110,22 +102,6 @@ void bst_insert(char ch)
 	else p->r = new_node;
 }
 
-void bst_traverse(NODE *node)
-{
-	int ch;
-
-	if (node != NULL) {
-		ch = node->ch;
-		if (ch == 32) printf("\'%c\'", ch);
-		else if (ch == 10) printf("\'\\n\'");
-		else printf("%c", ch);
-		printf(": %d\n", node->n_ch);
-		bst_traverse(node->l);
-		bst_traverse(node->r);
-	}
-	else return;
-}
-
 void bst_to_array(NODE *node)
 {
 	if (node == bst) {
@@ -138,26 +114,6 @@ void bst_to_array(NODE *node)
 		bst_to_array(node->r);
 	}
 	else return;
-}
-
-void maxHeapify(NODE **list, int i, int n)
-{
-	int j;
-	int done;
-	NODE *tmp;
-
-	j = 2 * (i + 1) - 1;
-	tmp = list[i];
-	done = 0;
-	while ((j <= n - 1) && (!done)) {
-		if ((j < n - 1) && (list[j]->n_ch < list[j + 1]->n_ch)) j++;
-		if (tmp->n_ch > list[j]->n_ch) done = 1;
-		else {
-			list[(j + 1) / 2 - 1] = list[j];
-			j = 2 * (j + 1) - 1;
-		}
-	}
-	list[(j + 1) / 2 - 1] = tmp;
 }
 
 void minHeapify(NODE **list, int i, int n)
@@ -184,26 +140,9 @@ void minHeapify(NODE **list, int i, int n)
 void array_to_minHeap(NODE **list, int n)
 {
 	int i;
-	NODE *tmp;
 
 	for (i = n / 2 - 1; i >= 0; i--) {
 		minHeapify(list, i, n);
-	}
-}
-
-void HeapSort(NODE **list, int n)
-{
-	int i;
-	NODE *tmp;
-
-	for (i = n / 2 - 1; i >= 0; i--) {
-		maxHeapify(list, i, n);
-	}
-	for (i = n - 1; i > 0; i--) {
-		tmp = list[0];
-		list[0] = list[i];
-		list[i] = tmp;
-		maxHeapify(list, 0, i);
 	}
 }
 
@@ -231,13 +170,6 @@ void minHeapInsertion(NODE **list, int n, NODE *item)
 	list[i] = item;
 }
 
-void printHeap(NODE **list, int n) {
-	int j;
-
-	for (j = 0; j < n; j++) printf("%d ", list[j]->n_ch);
-	printf("\n");
-}
-
 void printHuffmanCode(NODE *node, int i, int bit)
 {
 	int j;
@@ -249,9 +181,6 @@ void printHuffmanCode(NODE *node, int i, int bit)
 	}
 	else code[i - 1] = bit;
 
-	// printf("%d: ", node->n_ch);
-	// for (j = 0; j < i; j++) printf("%d", code[j]);
-	// printf("\n");
 	if (node->ch != -1) {
 		if (node->ch == 32) printf("\' \': ");
 		else if (node->ch == 10) printf("\'\\n\': ");
@@ -263,5 +192,14 @@ void printHuffmanCode(NODE *node, int i, int bit)
 	else {
 		printHuffmanCode(node->l, i + 1, 0);
 		printHuffmanCode(node->r, i + 1, 1);
+	}
+}
+
+void freeHeap(NODE *node)
+{
+	if (node != NULL) {
+		freeHeap(node->l);
+		freeHeap(node->r);
+		free(node);
 	}
 }
