@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#define bit2byte(x) (x % 8 ? x / 8 + 1: x / 8)
 
 typedef struct node {
 	int ch;
@@ -14,6 +15,7 @@ int n_node = 0;
 int bst_idx = 0;
 int n_heap;
 int *code;
+int n_bit = 0;
 
 NODE *bst_find(char ch);
 void bst_insert(char ch);
@@ -69,6 +71,8 @@ int main(void)
 	// printHeap(bst_array, n_heap);
 	printHuffmanCode(bst_array[0], 0, -1);
 	printf("Number of Chars read: %d\n", n_ch);
+	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, bit2byte(n_bit));
+	printf("  Ratio = %.4f %%\n", n_bit / (8.0 * n_ch) * 100);
 	return 0;
 }
 
@@ -241,6 +245,7 @@ void printHuffmanCode(NODE *node, int i, int bit)
 	if (bit == -1) {
 		code = (int *)malloc(sizeof(int) * (n_node - 1));
 		for (j = 0; j < (n_node - 1); j++) code[j] = -1;
+		printf("Huffman coding:\n");
 	}
 	else code[i - 1] = bit;
 
@@ -248,9 +253,12 @@ void printHuffmanCode(NODE *node, int i, int bit)
 	// for (j = 0; j < i; j++) printf("%d", code[j]);
 	// printf("\n");
 	if (node->ch != -1) {
-		printf("%d: ", node->n_ch);
+		if (node->ch == 32) printf("\' \': ");
+		else if (node->ch == 10) printf("\'\\n\': ");
+		else printf("%c: ", node->ch);
 		for (j = 0; j < i; j++) printf("%d", code[j]);
 		printf("\n");
+		n_bit += node->n_ch * i;
 	}
 	else {
 		printHuffmanCode(node->l, i + 1, 0);
