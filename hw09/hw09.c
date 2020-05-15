@@ -4,149 +4,152 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define bit2byte(x) (x % 8 ? x / 8 + 1: x / 8)
+#define bit2byte(x) (x % 8 ? x / 8 + 1: x / 8) // convert bits to bytes needed
 
+// data structure to store the char and its frequency
 typedef struct node {
-	int ch;
-	int n_ch;
-	struct node *l;
-	struct node *r;
+	int ch; // character
+	int n_ch; // frequency
+	struct node *l; // left child
+	struct node *r; // right child
 } NODE;
 
-NODE *bst = NULL;
-NODE **bst_array;
-int n_node = 0;
-int bst_idx = 0;
-int n_heap;
-int *code;
-int n_bit = 0;
+NODE *bst = NULL; // binary search tree (bst) root
+NODE **minHeap; // min heap
+int n_node = 0; // number of nodes in bst
+int bst_idx = 0; // index
+int n_heap; // number of nodes in heap
+int *code; // array for Huffman code
+int n_bit = 0; // number of bit needed using Huffman code
 
-NODE *bst_find(char ch);
-void bst_insert(char ch);
-void bst_to_array(NODE *node);
-void minHeapify(NODE **list, int i, int n);
-void array_to_minHeap(NODE **list, int n);
-NODE *minHeapRemoveMin(NODE **list, int n);
+NODE *bst_find(char ch); // find the node in bst
+void bst_insert(char ch); // insert the node in bst
+void bst_to_array(NODE *node); // store the bst in an array
+void minHeapify(NODE **list, int i, int n); // enforce min heap property
+void array_to_minHeap(NODE **list, int n); // make the array a min heap
+NODE *minHeapRemoveMin(NODE **list, int n); // remove minimum from the min heap
 void minHeapInsertion(NODE **list, int n, NODE *item);
-void printHuffmanCode(NODE *node, int i, int bit);
-void freeHeap(NODE *node);
+                                                   // insert a node to min heap
+void printHuffmanCode(NODE *node, int i, int bit); // print Huffman code
+void freeHeap(NODE *node); // free allocated memory of nodes in a heap
 
 int main(void)
 {
-	int i;
 	char ch;
-	int n_ch = 0;
+	int n_ch = 0; // number of chars read
 	NODE *tmp, *tmp2, *new_node;
 
-	while ((ch = getchar()) != EOF) {
-		n_ch++;
-		tmp = bst_find(ch);
-		if (tmp == NULL) bst_insert(ch);
-		else tmp->n_ch++;
+	while ((ch = getchar()) != EOF) { // read the paragraph
+		n_ch++; // number of chars read increase by one
+		tmp = bst_find(ch); // find the char in bst
+		if (tmp == NULL) bst_insert(ch); // add the char if not in bst
+		else tmp->n_ch++; // increase the frequency of the char by one
 	}
-	bst_to_array(bst);
-	array_to_minHeap(bst_array, n_node);
+	bst_to_array(bst); // store the bst in an array
+	array_to_minHeap(minHeap, n_node); // make the array a min heap
 	n_heap = n_node;
 	while (n_heap >= 2) {
-		tmp = minHeapRemoveMin(bst_array, n_heap--);
-		tmp2 = minHeapRemoveMin(bst_array, n_heap--);
+		tmp = minHeapRemoveMin(minHeap, n_heap--);
+		tmp2 = minHeapRemoveMin(minHeap, n_heap--);
 		new_node = (NODE *)malloc(sizeof(NODE));
 		new_node->ch = -1;
 		new_node->n_ch = tmp->n_ch + tmp2->n_ch;
 		new_node->l = tmp;
 		new_node->r = tmp2;
-		minHeapInsertion(bst_array, ++n_heap, new_node);
+		minHeapInsertion(minHeap, ++n_heap, new_node);
 	}
-	printHuffmanCode(bst_array[0], 0, -1);
+	printHuffmanCode(minHeap[0], 0, -1); // print Huffman code
 	printf("Number of Chars read: %d\n", n_ch);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, bit2byte(n_bit));
 	printf("  Ratio = %.4f %%\n", n_bit / (8.0 * n_ch) * 100);
 
-	free(code);
-	freeHeap(bst_array[0]);
-	free(bst_array);
+	free(code); // free allocated memory storing the Huffman code
+	freeHeap(minHeap[0]); // free allocated memory of nodes in a heap
+	free(minHeap);
 
 	return 0;
 }
 
-NODE *bst_find(char ch)
+NODE *bst_find(char ch) // find the node in bst
 {
-	NODE *tmp = bst;
+	NODE *tmp = bst; // initialize it as tree root
 
 	while (tmp != NULL) {
-		if (ch == tmp->ch) return tmp;
+		if (ch == tmp->ch) return tmp; // found and return
+		// not found, travel to proper child
 		else if (ch < tmp->ch) tmp = tmp->l;
-		else tmp = tmp->r; 
+		else tmp = tmp->r;
 	}
-	return NULL;
+	return NULL; // node not found
 }
 
-void bst_insert(char ch)
+void bst_insert(char ch) // insert the node in bst
 {
-	NODE *tmp = bst;
-	NODE *p = NULL;
+	NODE *tmp = bst; // initialize as tree root
+	NODE *p = NULL; // parent of a node
 	NODE *new_node;
 
-	n_node++;
-	new_node = (NODE *)malloc(sizeof(NODE));
+	n_node++; // number of nodes increase by one
+	new_node = (NODE *)malloc(sizeof(NODE)); // allocate memory
 	new_node->ch = ch;
-	new_node->n_ch = 1;
+	new_node->n_ch = 1; // initialize the frequency as one
 	new_node->l = NULL;
 	new_node->r = NULL;
 	while (tmp != NULL) {
-		p = tmp;
+		p = tmp; // store the parent
+		// travel to proper child
 		if (ch < tmp->ch) tmp = tmp->l;
 		else tmp = tmp->r; 
 	}
-	if (p == NULL) bst = new_node;
-	else if (ch < p->ch) p->l = new_node;
-	else p->r = new_node;
+	if (p == NULL) bst = new_node; // tree is empty
+	else if (ch < p->ch) p->l = new_node; // lower than parent
+	else p->r = new_node; // larger than parent
 }
 
-void bst_to_array(NODE *node)
+void bst_to_array(NODE *node) // store the bst in an array
 {
-	if (node == bst) {
-		bst_array = (NODE **)malloc(sizeof(NODE *) * n_node);
-		bst_idx = 0;
+	if (node == bst) { // if node is the root
+		minHeap = (NODE **)malloc(sizeof(NODE *) * n_node); // allocate memory
+		bst_idx = 0; // initialize the index
 	}
 	if (node != NULL) {
-		bst_array[bst_idx++] = node;
-		bst_to_array(node->l);
-		bst_to_array(node->r);
+		minHeap[bst_idx++] = node; // add the node to array
+		bst_to_array(node->l); // travel to left child
+		bst_to_array(node->r); // travel to right child
+		// turn it into a leaf node
 		node->l = NULL;
 		node->r = NULL;
 	}
-	else return;
 }
 
-void minHeapify(NODE **list, int i, int n)
+void minHeapify(NODE **list, int i, int n) // enforce min heap property
 {
-	int j;
-	int done;
+	int j; // index
+	int done; // loop flag
 	NODE *tmp;
 
-	j = 2 * (i + 1) - 1;
-	tmp = list[i];
+	j = 2 * (i + 1) - 1; // initialize j to be lchild of i
+	tmp = list[i]; // copy root element
 	done = 0;
 	while ((j <= n - 1) && (!done)) {
+		// let list[j] to be the smaller child
 		if ((j < n - 1) && (list[j]->n_ch > list[j + 1]->n_ch)) j++;
-		if (tmp->n_ch < list[j]->n_ch) done = 1;
+		if (tmp->n_ch < list[j]->n_ch) done = 1; // exit if root is larger
 		else {
-			list[(j + 1) / 2 - 1] = list[j];
-			j = 2 * (j + 1) - 1;
+			list[(j + 1) / 2 - 1] = list[j]; // replace j's parent with list[j]
+			j = 2 * (j + 1) - 1; // move j to its lchild
 		}
 	}
-	list[(j + 1) / 2 - 1] = tmp;
+	list[(j + 1) / 2 - 1] = tmp; // move original root to proper place
 }
 
 
-void array_to_minHeap(NODE **list, int n)
+void array_to_minHeap(NODE **list, int n) // make the array a min heap
 {
-	int i;
+	int i; // index
 
-	for (i = n / 2 - 1; i >= 0; i--) {
-		minHeapify(list, i, n);
-	}
+	// enforce min heap property to non leaf node bottom-up
+	for (i = n / 2 - 1; i >= 0; i--) minHeapify(list, i, n);
 }
 
 NODE *minHeapRemoveMin(NODE **list, int n) {
@@ -198,8 +201,9 @@ void printHuffmanCode(NODE *node, int i, int bit)
 	}
 }
 
-void freeHeap(NODE *node)
+void freeHeap(NODE *node) // free allocated memory of nodes in a heap
 {
+	// post-order traversal
 	if (node != NULL) {
 		freeHeap(node->l);
 		freeHeap(node->r);
