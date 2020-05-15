@@ -1,6 +1,6 @@
 // EE3980 HW09 Encoding ASCII Texts
 // 105061110, 周柏宇
-// 2020/05/13
+// 2020/05/15
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,7 @@ void freeHeap(NODE *node);
 
 int main(void)
 {
+	int i;
 	char ch;
 	int n_ch = 0;
 	NODE *tmp, *tmp2, *new_node;
@@ -112,6 +113,8 @@ void bst_to_array(NODE *node)
 		bst_array[bst_idx++] = node;
 		bst_to_array(node->l);
 		bst_to_array(node->r);
+		node->l = NULL;
+		node->r = NULL;
 	}
 	else return;
 }
