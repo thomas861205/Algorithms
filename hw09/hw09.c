@@ -64,7 +64,7 @@ int main(void)
 	printf("Number of Chars read: %d\n", n_ch);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, b2B(n_bit));
 	// print the ratio of bits needed with and without using Huffman code
-	printf("  Ratio = %.4f %%\n", n_bit / (8.0 * n_ch) * 100);
+	printf("  Ratio = %.4f %%\n", b2B(n_bit) * 100.0 / n_ch );
 
 	free(code); // free allocated memory storing the Huffman code
 	freeHeap(minHeap[0]); // free allocated memory for nodes in a heap
