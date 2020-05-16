@@ -31,7 +31,7 @@ void array_to_minHeap(NODE **list, int n); // make the array a min heap
 NODE *minHeapRemoveMin(NODE **list, int n); // remove minimum from the min heap
 void minHeapInsertion(NODE **list, int n, NODE *new_node);
                                                    // insert a node to min heap
-void BinaryMergeTree(void); // construct the merged tree for Huffman code
+void Tree(void); // construct the merged tree for Huffman code
 void printHuffmanCode(NODE *node, int i, int bit); // print Huffman code
 void freeHeap(NODE *node); // free allocated memory for nodes in a heap
 
@@ -42,7 +42,7 @@ int main(void)
 	n_ch = getFrequency(); // calculate character frequency
 	bst_to_array(bst); // store the bst in an array
 	array_to_minHeap(minHeap, n_node); // make the array a min heap
-	BinaryMergeTree(); // construct the merged tree for Huffman code
+	Tree(); // construct the merged tree for Huffman code
 	printHuffmanCode(minHeap[0], 0, -1); // print Huffman code
 	printf("Number of Chars read: %d\n", n_ch);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, b2B(n_bit));
@@ -173,7 +173,6 @@ void minHeapInsertion(NODE **list, int n, NODE *new_node)
 
 	i = n - 1; // start at last node
 	list[n - 1] = new_node; // put new node at last node
-	// stop going up the tree when new node is smaller than its parent
 	while ((i > 0) && (list[(i + 1) / 2 - 1]->n_ch > new_node->n_ch)) {
 		list[i] = list[(i + 1) / 2 - 1]; // overwrite list[i] with its parent
 		i = (i + 1) / 2 - 1; // move up one layer
@@ -181,7 +180,7 @@ void minHeapInsertion(NODE **list, int n, NODE *new_node)
 	list[i] = new_node; // put new node at proper place
 }
 
-void BinaryMergeTree(void) // construct the merged tree for Huffman code
+void Tree(void) // construct the merged tree for Huffman code
 {
 	NODE *tmp, *tmp2, *new_node;
 
@@ -192,7 +191,7 @@ void BinaryMergeTree(void) // construct the merged tree for Huffman code
 		tmp2 = minHeapRemoveMin(minHeap, n_heap--);
 		new_node = (NODE *)malloc(sizeof(NODE)); // allocate memory
 		new_node->ch = -1; // non leaf node
-		new_node->n_ch = tmp->n_ch + tmp2->n_ch; // add up the frequency
+		new_node->n_ch = tmp->n_ch + tmp2->n_ch; // sum up the frequency
 		new_node->l = tmp; // smaller node goes to left child
 		new_node->r = tmp2; // larger node goes to right child
 		// insert the merged node back to heap
