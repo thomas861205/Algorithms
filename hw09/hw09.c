@@ -22,6 +22,7 @@ int n_heap; // number of nodes in heap
 int *code; // array for Huffman code
 int n_bit = 0; // number of bits needed using Huffman code
 
+int getFrequency(void); // calculate character frequency
 NODE *bst_find(char ch); // find the node in bst
 void bst_insert(char ch); // insert the node in bst
 void bst_to_array(NODE *node); // store the bst in an array
@@ -30,40 +31,22 @@ void array_to_minHeap(NODE **list, int n); // make the array a min heap
 NODE *minHeapRemoveMin(NODE **list, int n); // remove minimum from the min heap
 void minHeapInsertion(NODE **list, int n, NODE *new_node);
                                                    // insert a node to min heap
+void BinaryMergeTree(void); // construct the merged tree for Huffman code
 void printHuffmanCode(NODE *node, int i, int bit); // print Huffman code
 void freeHeap(NODE *node); // free allocated memory for nodes in a heap
 
 int main(void)
 {
-	char ch;
-	int n_ch = 0; // number of chars read
-	NODE *tmp, *tmp2, *new_node;
+	int n_ch; // number of chars read
 
-	while ((ch = getchar()) != EOF) { // read the paragraph
-		n_ch++; // number of chars read increase by one
-		tmp = bst_find(ch); // find the char in bst
-		if (tmp == NULL) bst_insert(ch); // add the char if not in bst
-		else tmp->n_ch++; // increase the frequency of the char by one
-	}
+	n_ch = getFrequency(); // calculate character frequency
 	bst_to_array(bst); // store the bst in an array
 	array_to_minHeap(minHeap, n_node); // make the array a min heap
-	n_heap = n_node; // initialize as number of nodes in bst
-	while (n_heap >= 2) { // stop when only one node in heap
-		// select the first and second smallest nodes
-		tmp = minHeapRemoveMin(minHeap, n_heap--);
-		tmp2 = minHeapRemoveMin(minHeap, n_heap--);
-		new_node = (NODE *)malloc(sizeof(NODE)); // allocate memory
-		new_node->ch = -1; // non leaf node
-		new_node->n_ch = tmp->n_ch + tmp2->n_ch; // add up the frequency
-		new_node->l = tmp; // smaller node goes to left child
-		new_node->r = tmp2; // larger node goes to right child
-		// insert the merged node back to heap
-		minHeapInsertion(minHeap, ++n_heap, new_node);
-	}
+	BinaryMergeTree(); // construct the merged tree for Huffman code
 	printHuffmanCode(minHeap[0], 0, -1); // print Huffman code
 	printf("Number of Chars read: %d\n", n_ch);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, b2B(n_bit));
-	// print the ratio of bits needed with and without using Huffman code
+	// print the ratio of bytes needed with and without using Huffman code
 	printf("  Ratio = %.4f %%\n", b2B(n_bit) * 100.0 / n_ch );
 
 	free(code); // free allocated memory storing the Huffman code
@@ -71,6 +54,22 @@ int main(void)
 	free(minHeap);
 
 	return 0;
+}
+
+int getFrequency(void) // calculate character frequency
+{
+	char ch;
+	int n_ch = 0; // number of chars read
+	NODE *tmp;
+
+	while ((ch = getchar()) != EOF) { // read the paragraph
+		n_ch++; // number of chars read increase by one
+		tmp = bst_find(ch); // find the char in bst
+		if (tmp == NULL) bst_insert(ch); // add the char if not in bst
+		else tmp->n_ch++; // increase the frequency of the char by one
+	}
+
+	return n_ch;
 }
 
 NODE *bst_find(char ch) // find the node in bst
@@ -180,6 +179,25 @@ void minHeapInsertion(NODE **list, int n, NODE *new_node)
 		i = (i + 1) / 2 - 1; // move up one layer
 	}
 	list[i] = new_node; // put new node at proper place
+}
+
+void BinaryMergeTree(void) // construct the merged tree for Huffman code
+{
+	NODE *tmp, *tmp2, *new_node;
+
+	n_heap = n_node; // initialize as number of nodes in bst
+	while (n_heap >= 2) { // stop when only one node in heap
+		// select the first and second smallest nodes
+		tmp = minHeapRemoveMin(minHeap, n_heap--);
+		tmp2 = minHeapRemoveMin(minHeap, n_heap--);
+		new_node = (NODE *)malloc(sizeof(NODE)); // allocate memory
+		new_node->ch = -1; // non leaf node
+		new_node->n_ch = tmp->n_ch + tmp2->n_ch; // add up the frequency
+		new_node->l = tmp; // smaller node goes to left child
+		new_node->r = tmp2; // larger node goes to right child
+		// insert the merged node back to heap
+		minHeapInsertion(minHeap, ++n_heap, new_node);
+	}
 }
 
 void printHuffmanCode(NODE *node, int i, int bit) // print Huffman code
