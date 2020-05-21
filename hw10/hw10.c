@@ -7,11 +7,13 @@
 #include <limits.h>
 #include <time.h>
 // #include <sys/time.h>
-#define MAX 99
+#define MAX 25
 
 int g_C[] = {1, 5, 10, 50};
+int test_C[] = {1, 5, 18, 25};
 int x[4][MAX + 1];
 int g[4][MAX + 1];
+int sol[MAX - 6][MAX - 6]; // [6 ~ 98][7 ~ 99]
 
 void P1(void);
 void P2(void);
@@ -21,6 +23,7 @@ int g_TD(int n, int D);
 int g_BU(int n, int D, int skip);
 int g_sol(int n, int D, int C[]);
 void verify(int C[]);
+void printSol(void);
 double GetTime(void); // get local time in seconds
 
 int main(void)
@@ -28,6 +31,9 @@ int main(void)
 	int i, j, k;
 	clock_t start, end;
 
+	for (i = 0; i < (MAX - 6); i++) {
+		for (j = 0; j < (MAX - 6); j++) sol[i][j] = -1;
+	}
 	for (j = 0; j < 4; j++) { // # choice of coins
 		g[j][0] = 0; // value = 0
 		x[j][0] = 0;
@@ -46,11 +52,12 @@ int main(void)
 	}
 	start = clock();
 	P1();
-	P2();
-	P3();
+	// P2();
+	// P3();
 	P4();
 	end = clock();
-	verify(g_C);
+	// verify(test_C);
+	printSol();
 	printf("%.5fs\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 	return 0;
 }
@@ -142,6 +149,7 @@ void P4(void)
 				sum += g_TD(4, k);
 				// sum += g_BU(4, k, 2);
 			}
+			sol[i - 6][j - 7] = sum;
 			if (sum < min) {
 				min = sum;
 				minCoinA = i;
@@ -225,11 +233,28 @@ int g_sol(int n, int D, int C[])
 void verify(int C[])
 {
 	int i;
-	int ans;
+	int ans = 0;
 
 	printf(" D: %2d %2d %2d %2d ans\n", C[0], C[1], C[2], C[3]);
+	printf("---------------------\n");
 	for (i = 1; i <= MAX; i++) {
-		ans = g_sol(4, i, C);
+		ans += g_sol(4, i, C);
+	}
+	printf("---------------------\n");
+	printf("Total:            %3d\n", ans);
+	printf("Average:      %.5f\n", (float)ans / MAX);
+}
+
+void printSol(void)
+{
+	int i, j;
+
+	for (i = 0; i < (MAX - 6); i++) {
+		for (j = 0; j < (MAX - 6); j++) {
+			if (sol[i][j] > 0) printf("%4d", sol[i][j]);
+			else printf("  _ ");
+		}
+		printf("\n");
 	}
 }
 
