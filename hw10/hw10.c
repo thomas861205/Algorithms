@@ -31,6 +31,7 @@ int main(void)
 	g_min = P1();
 	P2();
 	P3();
+	P4();
 	for (j = 0; j < 4; j++) free(g[j]);
 	return 0;
 }
@@ -70,22 +71,23 @@ void P2(void)
 	int i, j;
 	int sum;
 	int min = g_min;
-	int min_coin = 50;
+	int minCoin = 50;
 
 	for (i = 51; i <= 99; i++) {
 		C[3] = i;
 		sum = 0;
+		for (j = 1; j <= 99; j++) g[3][j] = -1;
 		for (j = 1; j <= 99; j++) {
 			sum += g_BU(4, j);
 		}
 		// printf("%d: %d\n", i, sum);
 		if (sum < min) {
 			min = sum;
-			min_coin = i;
+			minCoin = i;
 		}
 	}
 	printf("Coin set {1, 5, 10, %d} has the minimum average of %.5f\n", 
-		min_coin, (float)min / 99);
+		minCoin, (float)min / 99);
 	C[3] = 50;
 }
 
@@ -94,7 +96,7 @@ void P3(void)
 	int i, j;
 	int sum;
 	int min = g_min;
-	int min_coin = 5;
+	int minCoin = 5;
 
 	// printf("%d: %d\n", 5, min);
 	for (i = 6; i <= 49; i++) {
@@ -110,17 +112,45 @@ void P3(void)
 		// printf("%d: %d\n", i, sum);
 		if (sum < min) {
 			min = sum;
-			min_coin = i;
+			minCoin = i;
 		}
 	}
 	printf("Coin set {1, 5, %d, 50} has the minimum average of %.5f\n", 
-		min_coin, (float)min / 99);
+		minCoin, (float)min / 99);
 	C[2] = 10;
 }
 
 void P4(void)
 {
-	;
+	int i, j, k, l;
+	int sum;
+	int min = g_min;
+	int minCoinA = 5;
+	int minCoinB = 10;
+
+	for (i = 6; i <= 98; i++) {
+		for (j = i + 1; j <= 99; j++) {
+			C[2] = i;
+			C[3] = j;
+			sum = 0;
+			for (k = 1; k <= 99; k++) {
+				g[2][k] = -1;
+				g[3][k] = -1;
+			}
+			for (k = 1; k <= 99; k++) {
+				sum += g_BU(4, k);
+			}
+			if (sum < min) {
+				min = sum;
+				minCoinA = i;
+				minCoinB = j;
+			}
+		}
+	}
+	printf("Coin set {1, 5, %d, %d} has the minimum average of %.5f\n", 
+		minCoinA, minCoinB, (float)min / 99);
+	C[2] = 10;
+	C[3] = 50;
 }
 
 int g_TD(int n, int D)
