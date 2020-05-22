@@ -5,94 +5,98 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <time.h>
-// #include <sys/time.h>
-#define MAX 25
+#include <sys/time.h>
+#define MAX 99 // D from 1 to MAX
 
-int g_C[] = {1, 5, 10, 50};
-int test_C[] = {1, 5, 18, 25};
-int x[4][MAX + 1];
-int g[4][MAX + 1];
-int sol[MAX - 6][MAX - 6]; // [6 ~ 98][7 ~ 99]
+int g_C[] = {1, 5, 10, 50};  // {$1, $5, $10, $50}
+int x[4][MAX + 1]; // solution array
+int g[4][MAX + 1]; // dynamic programming (DP) table
+int sol[MAX - 6][MAX - 6]; // answer table for P4
 
-void P1(void);
-void P2(void);
-void P3(void);
-void P4(void);
-int g_TD(int n, int D);
-int g_BU(int n, int D, int skip);
-int g_sol(int n, int D, int C[]);
-void verify(int C[]);
-void printSol(void);
+void P1(void); // problem 1
+void P2(void); // problem 2
+void P3(void); // problem 3
+void P4(void); // problem 4
+int g_TD(int n, int D); // calculate g using top-down DP
+int g_BU(int n, int D, int skip); // calculate g using bottom-up DP
+int g_sol(int n, int D, int C[]); // calculate g with solution
+void verify(int C[]); // verify the answer to the problem using coin set C
 double GetTime(void); // get local time in seconds
 
 int main(void)
 {
 	int i, j, k;
-	clock_t start, end;
+	double start, end;
 
-	for (i = 0; i < (MAX - 6); i++) {
-		for (j = 0; j < (MAX - 6); j++) sol[i][j] = -1;
-	}
 	for (j = 0; j < 4; j++) { // # choice of coins
-		g[j][0] = 0; // value = 0
+		g[j][0] = 0; // D = 0, needn't to take
 		x[j][0] = 0;
 		if (j == 0) { // $1
-			for (k = 1; k <= MAX; k++) {
-				g[j][k] = k;
+			for (k = 1; k <= MAX; k++) { // D = 1 ~ 99
+				g[j][k] = k; // k $1 coins
 				x[j][k] = k;
 			}
 		}
-		else {
+		else { // C2, C3, C4
 			for (k = 1; k <= MAX; k++) {
-				g[j][k] = -1;
+				g[j][k] = -1; // initialize as -1
 				x[j][k] = -1;
 			}
 		}
 	}
-	start = clock();
-	P1();
-	// P2();
-	// P3();
-	P4();
-	end = clock();
-	// verify(test_C);
-	printSol();
-	printf("%.5fs\n", ((double) (end - start)) / CLOCKS_PER_SEC);
+	for (i = 0; i < (MAX - 6); i++) {
+		for (j = 0; j < (MAX - 6); j++) sol[i][j] = -1;
+	}
+	// start = GetTime();
+	P1(); // problem 1
+	// verify(g_C);
+	P2(); // problem 2
+	P3(); // problem 3
+	P4(); // problem 4
+	// end = GetTime();
+	// printf("CPU time%.5fs\n", end - start);
+	// printf("  CPU time = %.5e seconds\n", end - start);
+
 	return 0;
 }
 
-void P1(void)
+void P1(void) // problem 1
 {
+	// Given {C1, C2, C3, C4} = {$1, $5, $10, $50},
+	// find the average number of coins for D = 1 to 99.
 	int i;
-	int sum = 0;
+	int sum = 0; // sum of solutions
 
-	for (i = 1; i <= MAX; i++) {
-		sum += g_TD(4, i);
-		// sum += g_BU(4, i, 1);
+	for (i = 1; i <= MAX; i++) { // D = 1 ~ 99
+		// accumulate g[4][i], skipping $1 calculation
+		sum += g_BU(4, i, 1); // using bottom-up DP
+		// sum += g_TD(4, i); // using top-down DP
 	}
 	printf("For coin set {1, 5, 10, 50} the average is %.5f\n",
 		(float)sum / MAX);
 }
 
-void P2(void)
+void P2(void) // problem 2
 {
+	// Given {$1, $5, $10, C4}. Assuming C4 is a variable,
+	// find its value that minimizes the average for D = 1 to 99.
 	int i, j;
-	int sum;
-	int min = INT_MAX;
-	int minCoin = -1;
+	int sum; // sum of solutions
+	int min = INT_MAX; // minimal solution
+	int minCoin = -1; // coin achieving the minimum
 
-	for (i = 51; i <= MAX; i++) {
-		g_C[3] = i;
+	for (i = 11; i <= MAX; i++) { // C4 = 11 ~ 99
+		g_C[3] = i; // vary C4
 		sum = 0;
-		for (j = 1; j <= MAX; j++) {
-			g[3][j] = -1; // init
-			sum += g_TD(4, j);
-			// sum += g_BU(4, j, 3);
+		for (j = 1; j <= MAX; j++) { // D = 1 ~ 99
+			g[3][j] = -1; // initialize the table for n = 4
+			// accumulate g[4][D], skipping {$1, $5, $10} calculation
+			sum += g_BU(4, j, 3); // using bottom-up DP
+			// sum += g_TD(4, j); // using top-down DP
 		}
 		if (sum < min) {
-			min = sum; // record min # coins
-			minCoin = i; // $i
+			min = sum; // store minimum
+			minCoin = i; // $i achieves minimum
 		}
 	}
 	g_C[3] = 50; // restore coin set
@@ -100,67 +104,73 @@ void P2(void)
 		minCoin, (float)min / MAX);
 }
 
-void P3(void)
+void P3(void) // problem 3
 {
+	// Given {$1, $5, C3, $50}. Assuming C3 is a variable,
+	// find its value that minimizes the average for D = 1 to 99.
 	int i, j;
-	int sum;
-	int min = INT_MAX;
-	int minCoin = -1;
+	int sum; // sum of solutions
+	int min = INT_MAX; // minimal solution
+	int minCoin = -1; // coin achieving the minimum
 
-	for (i = 6; i <= 49; i++) {
-		g_C[2] = i;
+	for (i = 6; i <= 49; i++) { // C3 = 6 ~ 49
+		g_C[2] = i; // vary C3
 		sum = 0;
 		for (j = 1; j <= MAX; j++) {
-			g[2][j] = -1;
-			g[3][j] = -1;
+			g[2][j] = -1; // initialize the table for n = 3
+			g[3][j] = -1; // initialize the table for n = 4
 		}
-		for (j = 1; j <= MAX; j++) {
-			sum += g_TD(4, j);
-			// sum += g_BU(4, j, 2);
+		for (j = 1; j <= MAX; j++) { // D = 1 ~ 99
+			// accumulate g[4][D], skipping {$1, $5} calculation
+			sum += g_BU(4, j, 2); // using bottom-up DP
+			// sum += g_TD(4, j); // using top-down DP
 		}
 		if (sum < min) {
-			min = sum;
-			minCoin = i;
+			min = sum; // store minimum
+			minCoin = i; // $i achieves minimum
 		}
 	}
+	g_C[2] = 10; // restore coin set
 	printf("Coin set {1, 5, %d, 50} has the minimum average of %.5f\n",
 		minCoin, (float)min / MAX);
-	g_C[2] = 10;
 }
 
-void P4(void)
+void P4(void) // problem 4
 {
-	int i, j, k, l;
-	int sum;
-	int min = INT_MAX;
-	int minCoinA = -1;
-	int minCoinB = -1;
+	// Given {$1, $5, C3, C4}. Assuming both C3 and C4 are variables,
+	// find their values that minimizes the average for D = 1 to 99.
+	int i, j, k;
+	int sum; // sum of solutions
+	int min = INT_MAX; // minimal solution
+	int minCoinA = -1; // C3 achieving the minimum
+	int minCoinB = -1; // C4 achieving the minimum
 
-	for (i = 6; i <= 98; i++) {
-		for (j = i + 1; j <= MAX; j++) {
-			g_C[2] = i;
-			g_C[3] = j;
+	for (i = 6; i <= 98; i++) { // C3 = 6 ~ 98
+		for (j = i + 1; j <= MAX; j++) { // C4 = 7 ~ 99
+			g_C[2] = i; // vary C3
+			g_C[3] = j; // vary C4
 			sum = 0;
 			for (k = 1; k <= MAX; k++) {
-				g[2][k] = -1;
-				g[3][k] = -1;
+				g[2][k] = -1; // initialize the table for n = 3
+				g[3][k] = -1; // initialize the table for n = 4
 			}
-			for (k = 1; k <= MAX; k++) {
-				sum += g_TD(4, k);
-				// sum += g_BU(4, k, 2);
+			for (k = 1; k <= MAX; k++) { // D = 1 ~ 99
+				// accumulate g[4][D], skipping {$1, $5} calculation
+				sum += g_BU(4, k, 2); // using bottom-up DP
+				// sum += g_TD(4, k); // using top-down DP
 			}
-			sol[i - 6][j - 7] = sum;
+			sol[i - 6][j - 7] = sum; // save the sum of solutions
 			if (sum < min) {
-				min = sum;
-				minCoinA = i;
-				minCoinB = j;
+				min = sum; // store minimum
+				minCoinA = i; // C3 = $i
+				minCoinB = j; // C4 = $j
 			}
 		}
 	}
+	g_C[2] = 10; // restore coin set
+	g_C[3] = 50;
 	printf("Coin set {1, 5, %d, %d} has the minimum average of %.5f\n", 
 		minCoinA, minCoinB, (float)min / MAX);
-	g_C[2] = 10;
-	g_C[3] = 50;
 }
 
 int g_TD(int n, int D)
@@ -218,7 +228,6 @@ int g_sol(int n, int D, int C[])
 			g[i][j] = min;
 		}
 	}
-
 	tmp = D;
 	for (i = n - 1; i >= 0; i--) {
 		sol[i] = x[i][tmp];
@@ -227,6 +236,7 @@ int g_sol(int n, int D, int C[])
 	printf("%2d: %2d %2d %2d %2d %3d", 
 		D, sol[0], sol[1], sol[2], sol[3], g[n - 1][D]);
 	printf("\n");
+
 	return g[n - 1][D];
 }
 
@@ -243,19 +253,6 @@ void verify(int C[])
 	printf("---------------------\n");
 	printf("Total:            %3d\n", ans);
 	printf("Average:      %.5f\n", (float)ans / MAX);
-}
-
-void printSol(void)
-{
-	int i, j;
-
-	for (i = 0; i < (MAX - 6); i++) {
-		for (j = 0; j < (MAX - 6); j++) {
-			if (sol[i][j] > 0) printf("%4d", sol[i][j]);
-			else printf("  _ ");
-		}
-		printf("\n");
-	}
 }
 
 // double GetTime(void)						// get local time in seconds
