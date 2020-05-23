@@ -18,7 +18,7 @@ void P2(void); // problem 2
 void P3(void); // problem 3
 void P4(void); // problem 4
 int g_TD(int n, int D); // calculate g using top-down DP
-int g_BU(int n, int D, int skip); // calculate g using bottom-up DP
+int g_BU(int n, int D, int s); // calculate g using bottom-up DP
 int g_sol(int n, int D, int C[]); // calculate g with solution
 void verify(int C[]); // verify the answer to the problem using coin set C
 double GetTime(void); // get local time in seconds
@@ -26,12 +26,12 @@ double GetTime(void); // get local time in seconds
 int main(void)
 {
 	int i, j, k;
-	double start, end;
+	double start, end; // timestamp
 
 	for (j = 0; j < 4; j++) { // # choice of coins
 		g[j][0] = 0; // D = 0, needn't to take
 		x[j][0] = 0;
-		if (j == 0) { // $1
+		if (j == 0) { // C1 = $1
 			for (k = 1; k <= MAX; k++) { // D = 1 ~ 99
 				g[j][k] = k; // k $1 coins
 				x[j][k] = k;
@@ -54,7 +54,6 @@ int main(void)
 	P3(); // problem 3
 	P4(); // problem 4
 	// end = GetTime();
-	// printf("CPU time%.5fs\n", end - start);
 	// printf("  CPU time = %.5e seconds\n", end - start);
 
 	return 0;
@@ -159,7 +158,7 @@ void P4(void) // problem 4
 				sum += g_BU(4, k, 2); // using bottom-up DP
 				// sum += g_TD(4, k); // using top-down DP
 			}
-			sol[i - 6][j - 7] = sum; // save the sum of solutions
+			sol[i - 6][j - 7] = sum; // save result for the coin set
 			if (sum < min) {
 				min = sum; // store minimum
 				minCoinA = i; // C3 = $i
@@ -173,65 +172,66 @@ void P4(void) // problem 4
 		minCoinA, minCoinB, (float)min / MAX);
 }
 
-int g_TD(int n, int D)
+int g_TD(int n, int D) // calculate g using top-down DP
 {
 	int i;
-	int tmp, min;
+	int tmp, min; // temporary variables
 
-	if (g[n - 1][D] >= 0) return g[n - 1][D];
+	if (g[n - 1][D] >= 0) return g[n - 1][D]; // already calculated
 	min = g_TD(n - 1, D);
-	for (i = 1; i <= (D / g_C[n - 1]); i++) {
+	for (i = 1; i <= (D / g_C[n - 1]); i++) { // try possible # coins
 		tmp = i + g_TD(n - 1, D - i * g_C[n - 1]);
-		if (tmp < min) min = tmp;
+		if (tmp < min) min = tmp; // update the minimum
 	}
-	g[n - 1][D] = min;
+	g[n - 1][D] = min; // save minimum in table
 
-	return min;
+	return g[n - 1][D];
 }
 
-int g_BU(int n, int D, int skip)
+int g_BU(int n, int D, int s) // calculate g using bottom-up DP
 {
 	int i, j, k;
-	int tmp, min;
+	int tmp, min; // temporary variables
 
-	for (i = skip; i < n; i++) { // # choice of coins
-		for (j = 1; j <= D; j++) { // total value
+	for (i = s; i < n; i++) { // # choice of coins
+		for (j = 1; j <= D; j++) { // all possible value
 			min = g[i - 1][j];
-			for (k = 1; k <= (j / g_C[i]); k++) {
+			for (k = 1; k <= (j / g_C[i]); k++) { // try possible # coins
 				tmp = k + g[i - 1][j - k * g_C[i]];
-				if (tmp < min) min = tmp;
+				if (tmp < min) min = tmp; // udpate the minimum
 			}
-			g[i][j] = min;
+			g[i][j] = min; // save minimum in table
 		}
 	}
 
 	return g[n - 1][D];
 }
 
-int g_sol(int n, int D, int C[])
+int g_sol(int n, int D, int C[]) // calculate g with solution
 {
 	int i, j, k;
-	int tmp, min;
-	int sol[4];
+	int tmp, min; // temporary variables
+	int sol[4]; // solution
 
 	for (i = 1; i < n; i++) { // # choice of coins
-		for (j = 1; j <= D; j++) { // total value
+		for (j = 1; j <= D; j++) { // all possible value
 			min = g[i - 1][j];
-			x[i][j] = 0;
-			for (k = 0; k <= (j / C[i]); k++) {
+			x[i][j] = 0; // initialize the solution
+			for (k = 0; k <= (j / C[i]); k++) { // try possible # coins
 				tmp = k + g[i - 1][j - k * C[i]];
 				if (tmp < min) {
-					min = tmp;
-					x[i][j] = k;
+					min = tmp; // update the minimum
+					x[i][j] = k; // update the # coins to take
 				}
 			}
-			g[i][j] = min;
+			g[i][j] = min; // save minimum in table
 		}
 	}
+	// retrieve the solution
 	tmp = D;
 	for (i = n - 1; i >= 0; i--) {
 		sol[i] = x[i][tmp];
-		tmp -= sol[i] * C[i];
+		tmp -= sol[i] * C[i]; // update remaining value
 	}
 	printf("%2d: %2d %2d %2d %2d %3d", 
 		D, sol[0], sol[1], sol[2], sol[3], g[n - 1][D]);
@@ -240,26 +240,28 @@ int g_sol(int n, int D, int C[])
 	return g[n - 1][D];
 }
 
-void verify(int C[])
+void verify(int C[]) // verify the answer to the problem using coin set C
 {
 	int i;
 	int ans = 0;
 
 	printf(" D: %2d %2d %2d %2d ans\n", C[0], C[1], C[2], C[3]);
 	printf("---------------------\n");
-	for (i = 1; i <= MAX; i++) {
-		ans += g_sol(4, i, C);
+	for (i = 1; i <= MAX; i++) { // D = 1 ~ 99
+		ans += g_sol(4, i, C); // accumulate the answer
 	}
 	printf("---------------------\n");
 	printf("Total:            %3d\n", ans);
 	printf("Average:      %.5f\n", (float)ans / MAX);
 }
 
-// double GetTime(void)						// get local time in seconds
-// {
-// 	struct timeval tv;						// variable to store time
+/*
+double GetTime(void)						// get local time in seconds
+{
+	struct timeval tv;						// variable to store time
 
-// 	gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL);				// get local time
 
-// 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
-// }
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+}
+*/
