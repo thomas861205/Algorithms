@@ -1,6 +1,6 @@
 // EE3980 HW10 Coin Set Design
 // 105061110, 周柏宇
-// 2020/05/21
+// 2020/05/24
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +26,7 @@ double GetTime(void); // get local time in seconds
 int main(void)
 {
 	int i, j, k;
-	double start, end; // timestamp
+	double start, end; // timestamps
 
 	for (j = 0; j < 4; j++) { // # choice of coins
 		g[j][0] = 0; // D = 0, needn't to take
@@ -47,13 +47,13 @@ int main(void)
 	for (i = 0; i < (MAX - 6); i++) {
 		for (j = 0; j < (MAX - 6); j++) sol[i][j] = -1;
 	}
-	// start = GetTime();
+	start = GetTime();
 	P1(); // problem 1
 	// verify(g_C);
 	P2(); // problem 2
 	P3(); // problem 3
 	P4(); // problem 4
-	// end = GetTime();
+	end = GetTime();
 	// printf("  CPU time = %.5e seconds\n", end - start);
 
 	return 0;
@@ -62,7 +62,7 @@ int main(void)
 void P1(void) // problem 1
 {
 	// Given {C1, C2, C3, C4} = {$1, $5, $10, $50},
-	// find the average number of coins for D = 1 to 99.
+	// find the average minimum Ncoin for D = 1 to 99.
 	int i;
 	int sum = 0; // sum of solutions
 
@@ -81,7 +81,7 @@ void P2(void) // problem 2
 	// find its value that minimizes the average for D = 1 to 99.
 	int i, j;
 	int sum; // sum of solutions
-	int min = INT_MAX; // minimal solution
+	int min = INT_MAX; // minimum solution
 	int minCoin = -1; // coin achieving the minimum
 
 	for (i = 11; i <= MAX; i++) { // C4 = 11 ~ 99
@@ -99,7 +99,7 @@ void P2(void) // problem 2
 		}
 	}
 	g_C[3] = 50; // restore coin set
-	printf("Coin set {1, 5, 10, %d} has the minimum average of %.5f\n", 
+	printf("Coin set {1, 5, 10, %d} has the minimum average of %.5f\n",
 		minCoin, (float)min / MAX);
 }
 
@@ -109,7 +109,7 @@ void P3(void) // problem 3
 	// find its value that minimizes the average for D = 1 to 99.
 	int i, j;
 	int sum; // sum of solutions
-	int min = INT_MAX; // minimal solution
+	int min = INT_MAX; // minimum solution
 	int minCoin = -1; // coin achieving the minimum
 
 	for (i = 6; i <= 49; i++) { // C3 = 6 ~ 49
@@ -137,10 +137,10 @@ void P3(void) // problem 3
 void P4(void) // problem 4
 {
 	// Given {$1, $5, C3, C4}. Assuming both C3 and C4 are variables,
-	// find their values that minimizes the average for D = 1 to 99.
+	// find their values that minimize the average for D = 1 to 99.
 	int i, j, k;
 	int sum; // sum of solutions
-	int min = INT_MAX; // minimal solution
+	int min = INT_MAX; // minimum solution
 	int minCoinA = -1; // C3 achieving the minimum
 	int minCoinB = -1; // C4 achieving the minimum
 
@@ -168,7 +168,7 @@ void P4(void) // problem 4
 	}
 	g_C[2] = 10; // restore coin set
 	g_C[3] = 50;
-	printf("Coin set {1, 5, %d, %d} has the minimum average of %.5f\n", 
+	printf("Coin set {1, 5, %d, %d} has the minimum average of %.5f\n",
 		minCoinA, minCoinB, (float)min / MAX);
 }
 
@@ -194,7 +194,7 @@ int g_BU(int n, int D, int s) // calculate g using bottom-up DP
 	int tmp, min; // temporary variables
 
 	for (i = s; i < n; i++) { // # choice of coins
-		for (j = 1; j <= D; j++) { // all possible value
+		for (j = 1; j <= D; j++) { // all possible D dollars
 			min = g[i - 1][j];
 			for (k = 1; k <= (j / g_C[i]); k++) { // try possible # coins
 				tmp = k + g[i - 1][j - k * g_C[i]];
@@ -233,7 +233,7 @@ int g_sol(int n, int D, int C[]) // calculate g with solution
 		sol[i] = x[i][tmp];
 		tmp -= sol[i] * C[i]; // update remaining value
 	}
-	printf("%2d: %2d %2d %2d %2d %3d", 
+	printf("%2d: %2d %2d %2d %2d %3d",
 		D, sol[0], sol[1], sol[2], sol[3], g[n - 1][D]);
 	printf("\n");
 
@@ -245,7 +245,7 @@ void verify(int C[]) // verify the answer to the problem using coin set C
 	int i;
 	int ans = 0;
 
-	printf(" D: %2d %2d %2d %2d ans\n", C[0], C[1], C[2], C[3]);
+	printf(" D: %2d %2d %2d %2d Ncoin\n", C[0], C[1], C[2], C[3]);
 	printf("---------------------\n");
 	for (i = 1; i <= MAX; i++) { // D = 1 ~ 99
 		ans += g_sol(4, i, C); // accumulate the answer
@@ -255,7 +255,7 @@ void verify(int C[]) // verify the answer to the problem using coin set C
 	printf("Average:      %.5f\n", (float)ans / MAX);
 }
 
-/*
+
 double GetTime(void)						// get local time in seconds
 {
 	struct timeval tv;						// variable to store time
@@ -264,4 +264,3 @@ double GetTime(void)						// get local time in seconds
 
 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
-*/
