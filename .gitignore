@@ -1,3 +1,4 @@
 *.exe
-*.dat
 *.xlsx
+*pseudo*
+*.docx

@@ -1,0 +1,21 @@
+8 12
+A
+B
+C
+D
+E
+F
+G
+H
+A -> B
+B -> C
+B -> D
+B -> E
+C -> A
+D -> A
+D -> H
+D -> F
+E -> F
+F -> G
+G -> E
+H -> F
