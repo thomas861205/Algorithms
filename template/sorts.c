@@ -11,6 +11,7 @@ void BubbleSort(int *A, int n, int dec);
 void ShakerSort(int *A, int n, int dec);
 void HeapSort(int *A, int n, int dec);
 void heapify(int *A, int i, int n, int dec);
+void array2heap(int *A, int n, int min);
 void MergeSort(int *A, int n, int dec);
 void mergesort(int *A, int *B, int low, int high, int dec);
 void merge(int *A, int *B, int low, int mid, int high, int dec);
@@ -27,9 +28,9 @@ int main(void)
 	for (i = 0; i < N; i++) {
 		A[i] = (rand() % N) + 1;
 	}
-	QuickSort(A, N, 0);
-	print(A, N);
 	QuickSort(A, N, 1);
+	print(A, N);
+	QuickSort(A, N, 0);
 	print(A, N);
 
 	return 0;
@@ -72,7 +73,7 @@ void InsertionSort(int *A, int n, int dec)
 	for (j = 1; j < n; j++) {
 		tmp = A[j];
 		i = j - 1;
-		if (!dec) {
+		if (dec) {
 			while ((i >= 0) && (tmp > A[i])) {
 				A[i + 1] = A[i];
 				i--;
@@ -149,7 +150,9 @@ void ShakerSort(int *A, int n, int dec)
 
 
 void HeapSort(int *A, int n, int dec)
-{
+{	
+	// decreasing-order: use min heap
+	// increasing-order: use max heap
 	int i, tmp;
 
 	for (i = n / 2 - 1; i >= 0; i--) {
@@ -163,6 +166,8 @@ void HeapSort(int *A, int n, int dec)
 
 void heapify(int *A, int i, int n, int dec)
 {
+	// dec = 1: min heap
+	// dec = 0: max heap
 	int j, done, tmp;
 
 	j = 2 * (i + 1) - 1;
@@ -189,6 +194,14 @@ void heapify(int *A, int i, int n, int dec)
 	A[(j + 1) / 2 - 1] = tmp;
 }
 
+
+void array2heap(int *A, int n, int min) {
+	int i;
+
+	for (i = n / 2 - 1; i >= 0; i--) {
+		heapify(A, i, n, min);
+	}
+}
 
 void MergeSort(int *A, int n, int dec) {
 	int *B;
@@ -285,7 +298,7 @@ int partition(int *A, int low, int high, int dec)
 
 	v = A[low]; i = low; j = high;
 	do {
-		if (!dec) {
+		if (dec) {
 			do {i++;} while ((A[i] > v) && (i < high));
 			do {j--;} while ((A[j] < v) && (j > low ));
 		}
