@@ -33,17 +33,18 @@ int SCCs_ptr; // current position of SCCs
 int *C; // temporary array for CountingSort()
 Node **bucket; // hash table
 
-void readData(); // read data, construct the graph and its transposed version
+// read data, construct the graph and its transposed version
+void readData(void);
 int nameToIndex(char *name); // convert name to array index
 unsigned long hash(char *str); // hash function
 double GetTime(void); // get local time in seconds
-void SCC(); // find strongly connected components of a graph
+void SCC(void); // find strongly connected components of a graph
 void DFS_Call(int **G, int *len, int *idx);
 							  // initialization and recursive DFS function call
 void DFS_d(int **G, int *len, int v); // DFS from vertex v of the graph G
 void CountingSort(int *idx, int *key, int n, int k);
 								 // sort the idx by its key using counting sort
-void freeAll(); // free all allocated memory
+void freeAll(void); // free all allocated memory
 
 int main(void)
 {
@@ -76,7 +77,7 @@ int main(void)
 	return 0;
 }
 
-void readData()
+void readData(void)
 {
 	int i, j, k, l; // indices
 	int class; // class of a name determined by the hash function
@@ -189,7 +190,7 @@ double GetTime(void)						// get local time in seconds
 	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
 }
 
-void SCC() // find strongly connected components of a graph
+void SCC(void) // find strongly connected components of a graph
 {
 	int i; // loop index
 
@@ -279,7 +280,7 @@ void CountingSort(int *idx, int *key, int n, int k)
 	}
 }
 
-void freeAll() // free all allocated memory
+void freeAll(void) // free all allocated memory
 {
 	int i; // loop index
 	Node *tmp, *next;
