@@ -1,126 +1,133 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define N_REPEAT 500
-#define D 1
-#define I 1
-#define C 2
+#define N_REPEAT 500 // number of repetitions
+#define D 1 // delete cost
+#define I 1 // insert cost
+#define C 2 // change cost
 
+// data structure to store the line information, remember to memtion
 typedef struct line {
-	int nth;
-	int len;
-	char *txt;
+	int nth; // nth line
+	int len; // number of bytes in the line
+	char *txt; // the line
 	struct line *next;
 } LINE;
 
-int N;
-int n_change;
-int idx_T;
-int **cost;
-LINE *P1;
-LINE *P2;
-char *T;
+int N; // number of lines
+int n_change; // number of changes
+int idx_T; // index for operations
+int **cost; // table of transformation cost
+LINE *P1; // paragraph 1
+LINE *P2; // paragraph 2
+char *T; // sequence of operations
 
-LINE *readFile(char const *fname, int *n); // hash the line maybe?
-void Transform(void);
-void Trace(void);
-void printAns(void);
-void freeAll(void);
+LINE *readFile(char const *fname, int *n); // read paragraph line-by-line
+void WagnerFischer(void); // generate the transformation cost table
+void Trace(void); // trace the transformation sequence
+void printAns(void); // print operations
+void freeAll(void); // free allocated memory
 double GetTime(void); // get local time in seconds
 
 int main(int argc, char const *argv[])
 {
-	int i;
-	double start, end;
-	double sum_t = 0;
+	int i; // loop index
+	double start, end; // timestamp
+	double sum_t = 0; // cumulated time
 
-	P1 = readFile(argv[1], &N);
-	P2 = readFile(argv[2], &N);
+	P1 = readFile(argv[1], &N); // read first paragraph
+	P2 = readFile(argv[2], &N); // read second paragraph
 	cost = (int **)malloc(sizeof(int *) * (N + 1));
 	for (i = 0; i <= N; i++) {
 		cost[i] = (int *)malloc(sizeof(int) * (N + 1));
 	}
 	T = (char *)malloc(sizeof(char) * 2 * N);
 	for (i = 0; i < N_REPEAT; i++) {
-		start = GetTime();
-		Transform();
-		Trace();
-		end = GetTime();
-		if (!i) printAns();
-		sum_t += end - start;
+		start = GetTime(); // start the timer
+		WagnerFischer(); // generate the transformation cost table
+		Trace(); // trace the transformation sequence
+		end = GetTime(); // stop the timer
+		sum_t += end - start; // accumulate the CPU time
+		if (!i) printAns(); // print the result just for once
 	}
 	printf("CPU time: %.5f sec\n", sum_t / N_REPEAT);
-	freeAll();
+	freeAll(); // free allocated memory
 	return 0;
 }
 
 LINE *readFile(char const *fname, int *n)
 {
-	FILE *fp;
-	char *line_buff = NULL;
-	int buf_len = 0;
-	int n_line = 0;
-	int n_char;
-	LINE *head = NULL;
+	FILE *fp; // file object
+	char *line_buff = NULL; // buffer to store the line
+	int buf_len = 0; // length of the buffer
+	int n_line = 0; // number of lines
+	int n_char; // number of bytes
+	LINE *head = NULL; // first line
 	LINE *new_node;
-	LINE *tail;
+	LINE *tail; // last line
 
-	fp = fopen(fname, "r");
+	fp = fopen(fname, "r"); // open the text file
 	if (fp != NULL) {
 		while ((n_char = getline(&line_buff, &buf_len, fp)) != -1) {
-			n_line++;
+			n_line++; // number of lines increases by 1
 			new_node = (LINE *)malloc(sizeof(LINE));
-			new_node->nth = n_line;
-			new_node->len = n_char; // include '\n' not include '\0'
+			new_node->nth = n_line; // the nth line
+			new_node->len = n_char; // line length
 			new_node->txt = (char *)malloc(sizeof(char) * (n_char + 1));
-			strcpy(new_node->txt, line_buff);
+			strcpy(new_node->txt, line_buff); // line texts
 			new_node->next = NULL;
-			if (head == NULL) {
+			if (head == NULL) { // first line
 				head = new_node;
 			}
 			else {
-				tail->next = new_node;
+				tail->next = new_node; // connect it to last line
 			}
-			tail = new_node;
+			tail = new_node; // update last line
 		}
-		*n = n_line;
+		*n = n_line; // number of lines for this paragraph
 		free(line_buff);
-		fclose(fp);
-		return head;
+		fclose(fp); // close the file
+		return head; // return the paragraph
 	}
 	else {
-		*n = -1;
+		*n = -1; // file open failed
 		return NULL;
 	}
 }
 
-void Transform(void)
+void WagnerFischer(void) // generate the transformation cost table
 {
-	int i, j;
-	int m1, m2, m3;
-	LINE *p = P1;
-	LINE *q = P2;
+	int i, j; // loop indices
+	int m1, m2, m3; // costs
+	LINE *p = P1; // paragraph 1
+	LINE *q = P2; // paragraph 2
 
+	// initialize the cost table
 	cost[0][0] = 0;
-	while (p != NULL) {
-		cost[p->nth][0] = cost[p->nth - 1][0] + D;
-		p = p->next;
-	}
-	while (q != NULL) {
-		cost[0][q->nth] = cost[0][q->nth - 1] + I;
-		q = q->next;
+	// while (p != NULL) {
+	// 	cost[p->nth][0] = cost[p->nth - 1][0] + D;
+	// 	p = p->next;
+	// }
+	// while (q != NULL) {
+	// 	cost[0][q->nth] = cost[0][q->nth - 1] + I;
+	// 	q = q->next;
+	// }
+	for (i = 1; i <=N; i++) {
+		cost[i][0] = cost[i - 1][0] + D;
+		cost[0][i] = cost[0][i - 1] + I;
 	}
 	p = P1;
 	while (p != NULL) {
 		q = P2;
 		while (q != NULL) {
 			i = p->nth; j = q->nth;
-			if ((p->len == q->len) && !strcmp(p->txt, q->txt)) { // faster?
+			// if two lines are identical
+			if ((p->len == q->len) && !strcmp(p->txt, q->txt)) {
 				cost[i][j] = cost[i - 1][j - 1];
 			}
-			else {
-				m1 = cost[i - 1][j - 1] + C;
-				m2 = cost[i - 1][j] + D;
+			else { // otherwise
+				m1 = cost[i - 1][j - 1] + C; // cost for change
+				m2 = cost[i - 1][j] + D; // cost for delete
 				cost[i][j] = m1 < m2 ? m1 : m2;
 				m3 = cost[i][j - 1] + I;
 				cost[i][j] = cost[i][j] < m3 ? cost[i][j] : m3;
