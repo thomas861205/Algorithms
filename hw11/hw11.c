@@ -31,6 +31,7 @@ double GetTime(void); // get local time in seconds
 
 int main(int argc, char const *argv[])
 {
+	// expect the command line to be: ./a.out filename1 filename2
 	int i; // loop index
 	double start, end; // timestamp
 	double sum_t = 0; // cumulated time
@@ -50,12 +51,12 @@ int main(int argc, char const *argv[])
 		sum_t += end - start; // accumulate the CPU time
 		if (!i) printAns(); // print the result just for once
 	}
-	printf("CPU time: %.5f sec\n", sum_t / N_REPEAT);
+	printf("CPU time: %.5f sec\n", sum_t / N_REPEAT); // print average CPU time
 	freeAll(); // free allocated memory
 	return 0;
 }
 
-LINE *readFile(char const *fname, int *n)
+LINE *readFile(char const *fname, int *n) // read paragraph line-by-line
 {
 	FILE *fp; // file object
 	char *line_buff = NULL; // buffer to store the line
@@ -104,14 +105,6 @@ void WagnerFischer(void) // generate the transformation cost table
 
 	// initialize the cost table
 	cost[0][0] = 0;
-	// while (p != NULL) {
-	// 	cost[p->nth][0] = cost[p->nth - 1][0] + D;
-	// 	p = p->next;
-	// }
-	// while (q != NULL) {
-	// 	cost[0][q->nth] = cost[0][q->nth - 1] + I;
-	// 	q = q->next;
-	// }
 	for (i = 1; i <=N; i++) {
 		cost[i][0] = cost[i - 1][0] + D;
 		cost[0][i] = cost[0][i - 1] + I;
@@ -128,8 +121,9 @@ void WagnerFischer(void) // generate the transformation cost table
 			else { // otherwise
 				m1 = cost[i - 1][j - 1] + C; // cost for change
 				m2 = cost[i - 1][j] + D; // cost for delete
+				m3 = cost[i][j - 1] + I; // cost for insert
+				// cost = min{m1, m2, m3}
 				cost[i][j] = m1 < m2 ? m1 : m2;
-				m3 = cost[i][j - 1] + I;
 				cost[i][j] = cost[i][j] < m3 ? cost[i][j] : m3;
 			}
 			q = q->next;
@@ -138,34 +132,36 @@ void WagnerFischer(void) // generate the transformation cost table
 	}
 }
 
-void Trace(void)
+void Trace(void) // trace the transformation sequence
 {
-	int i = N;
-	int j = N;
-	LINE *p = P1;
-	LINE *q = P2;
+	int i = N; // loop index
+	int j = N; // loop index
+	LINE *p = P1; // paragraph 1
+	LINE *q = P2; // paragraph 2
 
-	n_change = 0;
-	idx_T = 0;
+	n_change = 0; // number of delete, insert and change
+	idx_T = 0; // index for the operation sequence (reversed)
 	while ((i > 0) || (j > 0)) {
+		// Start from the bottom right of the table, and see where do the
+		// value comes from(left, up or upper left).
 		if ((i > 0) && (j > 0) && (cost[i][j] == cost[i - 1][j - 1] + C)) {
-			T[idx_T] = 'C';
+			T[idx_T] = 'C'; // change
 			i--;
 			j--;
 			n_change++;
 		}
 		else if ((i == 0) || (cost[i][j] == cost[i][j - 1] + I)) {
-			T[idx_T] = 'I';
+			T[idx_T] = 'I'; // insert
 			j--;
 			n_change++;
 		}
 		else if ((j == 0) || (cost[i][j] == cost[i - 1][j] + D)) {
-			T[idx_T] = 'D';
+			T[idx_T] = 'D'; // delete
 			i--;
 			n_change++;
 		}
 		else {
-			T[idx_T] = '-';
+			T[idx_T] = '-'; // need not to change(keep)
 			i--;
 			j--;
 		}
@@ -173,12 +169,12 @@ void Trace(void)
 	}
 }
 
-void printAns(void)
+void printAns(void) // print operations
 {
-	int i = idx_T - 1;
-	int nth = 1;
-	LINE *p = P1;
-	LINE *q = P2;
+	int i = idx_T - 1; // first operation
+	int nth = 1; // nth line for paragraph 1
+	LINE *p = P1; // paragraph 1
+	LINE *q = P2; // paragraph 2
 
 	printf("%d lines with %d changes:\n", N, n_change);
 	while (i >= 0) {
@@ -209,22 +205,22 @@ void printAns(void)
 	}
 }
 
-void freeAll(void)
+void freeAll(void) // free allocated memory
 {
-	int i;
+	int i; // loop index
 	LINE *tmp;
 	LINE *nxt;
 
 	tmp = P1;
 	while (tmp != NULL) {
-		nxt = tmp->next;
+		nxt = tmp->next; // save next node of the link list
 		free(tmp->txt);
 		free(tmp);
 		tmp = nxt;
 	}
 	tmp = P2;
 	while (tmp != NULL) {
-		nxt = tmp->next;
+		nxt = tmp->next; // save next node of the link list
 		free(tmp->txt);
 		free(tmp);
 		tmp = nxt;
