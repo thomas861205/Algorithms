@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define N_REPEAT 1
+#define N_REPEAT 500
 #define D 1
 #define I 1
 #define C 2
@@ -13,39 +13,43 @@ typedef struct line {
 	struct line *next;
 } LINE;
 
-typedef struct operation {
-	char opr;
-	char *txt;
-	struct operation *next;
-} OPR;
-
-int N, M;
+int N;
+int n_change;
+int idx_T;
 int **cost;
-LINE *P1 = NULL;
-LINE *P2 = NULL;
-OPR *T = NULL;
+LINE *P1;
+LINE *P2;
+char *T;
 
 LINE *readFile(char const *fname, int *n); // hash the line maybe?
 void Transform(void);
 void Trace(void);
+void printAns(void);
 void freeAll(void);
 double GetTime(void); // get local time in seconds
 
 int main(int argc, char const *argv[])
 {
 	int i;
-	LINE *l;
 	double start, end;
+	double sum_t = 0;
 
 	P1 = readFile(argv[1], &N);
-	P2 = readFile(argv[2], &M);
-	start = GetTime();
+	P2 = readFile(argv[2], &N);
+	cost = (int **)malloc(sizeof(int *) * (N + 1));
+	for (i = 0; i <= N; i++) {
+		cost[i] = (int *)malloc(sizeof(int) * (N + 1));
+	}
+	T = (char *)malloc(sizeof(char) * 2 * N);
 	for (i = 0; i < N_REPEAT; i++) {
+		start = GetTime();
 		Transform();
 		Trace();
+		end = GetTime();
+		if (!i) printAns();
+		sum_t += end - start;
 	}
-	end = GetTime();
-	printf("CPU time: %.5f sec\n", (end - start) / N_REPEAT);
+	printf("CPU time: %.5f sec\n", sum_t / N_REPEAT);
 	freeAll();
 	return 0;
 }
@@ -53,8 +57,8 @@ int main(int argc, char const *argv[])
 LINE *readFile(char const *fname, int *n)
 {
 	FILE *fp;
-	char *line = NULL;
-	int len = 0;
+	char *line_buff = NULL;
+	int buf_len = 0;
 	int n_line = 0;
 	int n_char;
 	LINE *head = NULL;
@@ -63,13 +67,13 @@ LINE *readFile(char const *fname, int *n)
 
 	fp = fopen(fname, "r");
 	if (fp != NULL) {
-		while ((n_char = getline(&line, &len, fp)) != -1) {
+		while ((n_char = getline(&line_buff, &buf_len, fp)) != -1) {
 			n_line++;
 			new_node = (LINE *)malloc(sizeof(LINE));
 			new_node->nth = n_line;
 			new_node->len = n_char; // include '\n' not include '\0'
 			new_node->txt = (char *)malloc(sizeof(char) * (n_char + 1));
-			strcpy(new_node->txt, line);
+			strcpy(new_node->txt, line_buff);
 			new_node->next = NULL;
 			if (head == NULL) {
 				head = new_node;
@@ -80,7 +84,7 @@ LINE *readFile(char const *fname, int *n)
 			tail = new_node;
 		}
 		*n = n_line;
-		free(line);
+		free(line_buff);
 		fclose(fp);
 		return head;
 	}
@@ -97,10 +101,6 @@ void Transform(void)
 	LINE *p = P1;
 	LINE *q = P2;
 
-	cost = (int **)malloc(sizeof(int *) * (N + 1));
-	for (i = 0; i <= N; i++) {
-		cost[i] = (int *)malloc(sizeof(int) * (M + 1));
-	}
 	cost[0][0] = 0;
 	while (p != NULL) {
 		cost[p->nth][0] = cost[p->nth - 1][0] + D;
@@ -133,61 +133,60 @@ void Transform(void)
 
 void Trace(void)
 {
-	int i, j;
-	int n_change = 0;
-	int nth = 1;
-	OPR *tmp;
+	int i = N;
+	int j = N;
 	LINE *p = P1;
 	LINE *q = P2;
 
-	i = N;
-	j = M;
+	n_change = 0;
+	idx_T = 0;
 	while ((i > 0) || (j > 0)) {
-		tmp = (OPR *)malloc(sizeof(OPR));
 		if ((i > 0) && (j > 0) && (cost[i][j] == cost[i - 1][j - 1] + C)) {
-			tmp->opr = 'C';
+			T[idx_T] = 'C';
 			i--;
 			j--;
 			n_change++;
 		}
 		else if ((i == 0) || (cost[i][j] == cost[i][j - 1] + I)) {
-			tmp->opr = 'I';
+			T[idx_T] = 'I';
 			j--;
 			n_change++;
 		}
 		else if ((j == 0) || (cost[i][j] == cost[i - 1][j] + D)) {
-			tmp->opr = 'D';
+			T[idx_T] = 'D';
 			i--;
 			n_change++;
 		}
 		else {
-			tmp->opr = '-';
+			T[idx_T] = '-';
 			i--;
 			j--;
 		}
-		if (T == NULL) {
-			tmp->next = NULL;
-		}
-		else {
-			tmp->next = T;
-		}
-		T = tmp;
+		idx_T++;
 	}
-	printf("%d lines with %d changes:\n", M, n_change);
-	tmp = T;
-	while (tmp != NULL) {
-		if (tmp->opr == 'I') {
+}
+
+void printAns(void)
+{
+	int i = idx_T - 1;
+	int nth = 1;
+	LINE *p = P1;
+	LINE *q = P2;
+
+	printf("%d lines with %d changes:\n", N, n_change);
+	while (i >= 0) {
+		if (T[i] == 'I') {
 			printf("Insert line %d:\n", nth);
 			printf("%s", q->txt);
 			nth++;
 			q = q->next;
 		}
-		else if (tmp->opr == 'D') {
+		else if (T[i] == 'D') {
 			printf("Delete line %d:\n", nth);
 			printf("%s", p->txt);
 			p = p->next;
 		}
-		else if (tmp->opr == 'C') {
+		else if (T[i] == 'C') {
 			printf("Change line %d:\n", nth);
 			printf("%s", q->txt);
 			nth++;
@@ -199,7 +198,7 @@ void Trace(void)
 			p = p->next;
 			q = q->next;
 		}
-		tmp = tmp->next;
+		i--;
 	}
 }
 
@@ -208,8 +207,6 @@ void freeAll(void)
 	int i;
 	LINE *tmp;
 	LINE *nxt;
-	OPR *tmp2;
-	OPR *nxt2;
 
 	tmp = P1;
 	while (tmp != NULL) {
@@ -225,14 +222,11 @@ void freeAll(void)
 		free(tmp);
 		tmp = nxt;
 	}
-	for (i = 0; i <= N; i++) free(cost[i]);
-	free(cost);
-	tmp2 = T;
-	while (tmp2 != NULL) {
-		nxt2 = tmp2->next;
-		free(tmp2);
-		tmp2 = nxt2;
+	for (i = 0; i <= N; i++) {
+		free(cost[i]);
 	}
+	free(cost);
+	free(T);
 }
 
 double GetTime(void)						// get local time in seconds
