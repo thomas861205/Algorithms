@@ -30,7 +30,7 @@ char *T; // sequence of operations
 LINE *readFile(char const *fname, int *n); // read paragraph line-by-line
 void WagnerFischer(void); // generate the transformation cost table
 void Trace(void); // trace the transformation sequence
-void printAns(void); // print operations
+void printSeq(void); // print operation sequence
 void freeAll(void); // free allocated memory
 double GetTime(void); // get local time in seconds
 
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
 		Trace(); // trace the transformation sequence
 		end = GetTime(); // stop the timer
 		sum_t += end - start; // accumulate the CPU time
-		if (!i) printAns(); // print the result just for once
+		if (!i) printSeq(); // print the result just for once
 	}
 	printf("CPU time: %.5f sec\n", sum_t / N_REPEAT); // print average CPU time
 	freeAll(); // free allocated memory
@@ -131,11 +131,12 @@ void WagnerFischer(void) // generate the transformation cost table
 			}
 			else { // otherwise
 				m1 = cost[i - 1][j - 1] + C; // cost for change
-				m2 = cost[i - 1][j] + D; // cost for delete
-				m3 = cost[i][j - 1] + I; // cost for insert
+				m2 = cost[i][j - 1] + I; // cost for insert
+				m3 = cost[i - 1][j] + D; // cost for delete
 				// cost = min{m1, m2, m3}
-				cost[i][j] = m1 < m2 ? m1 : m2;
-				cost[i][j] = cost[i][j] < m3 ? cost[i][j] : m3;
+				// if m1 = m2 = m3, then the priority is m1 -> m2 -> m3
+				cost[i][j] = m2 <= m3 ? m2 : m3;
+				cost[i][j] = m1 <= cost[i][j] ? m1 : cost[i][j];
 			}
 			q = q->next;
 		}
@@ -151,8 +152,8 @@ void Trace(void) // trace the transformation sequence
 	n_change = 0; // number of delete, insert and change
 	idx_T = 0; // index for the operation sequence (reversed)
 	while ((i > 0) || (j > 0)) {
-		// Start from the bottom right of the table, and see where do the
-		// value comes from(left, up or upper left).
+		// Start from the bottom right of the table, and see where does the
+		// value come from (left, up or upper left).
 		if ((i > 0) && (j > 0) && (cost[i][j] == cost[i - 1][j - 1] + C)) {
 			T[idx_T] = 'C'; // change
 			i--;
@@ -170,7 +171,7 @@ void Trace(void) // trace the transformation sequence
 			n_change++;
 		}
 		else {
-			T[idx_T] = '-'; // need not to change(keep)
+			T[idx_T] = '-'; // need not to change (keep)
 			i--;
 			j--;
 		}
@@ -178,10 +179,10 @@ void Trace(void) // trace the transformation sequence
 	}
 }
 
-void printAns(void) // print operations
+void printSeq(void) // print operation sequence
 {
-	int i = idx_T - 1; // first operation
-	int nth = 1; // nth line for paragraph 1
+	int i = idx_T - 1; // initialize to first operation
+	int nth = 1; // nth line of paragraph 1
 	LINE *p = P1; // paragraph 1
 	LINE *q = P2; // paragraph 2
 

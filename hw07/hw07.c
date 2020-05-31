@@ -171,6 +171,7 @@ int nameToIndex(char *name) // convert name to array index
 
 unsigned long hash(char *str) // hash function
 {
+	// djb2 hash function
 	unsigned long hash = 5381;
 	int c;
 
