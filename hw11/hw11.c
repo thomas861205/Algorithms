@@ -19,7 +19,7 @@ typedef struct line {
 	struct line *next;
 } LINE;
 
-int N; // number of lines
+int N, M; // number of lines
 int n_change; // number of changes
 int idx_T; // index for operations
 int **cost; // table of transformation cost
@@ -42,12 +42,12 @@ int main(int argc, char const *argv[])
 	double sum_t = 0; // cumulated time
 
 	P1 = readFile(argv[1], &N); // read first paragraph
-	P2 = readFile(argv[2], &N); // read second paragraph
+	P2 = readFile(argv[2], &M); // read second paragraph
 	cost = (int **)malloc(sizeof(int *) * (N + 1));
 	for (i = 0; i <= N; i++) {
-		cost[i] = (int *)malloc(sizeof(int) * (N + 1));
+		cost[i] = (int *)malloc(sizeof(int) * (M + 1));
 	}
-	T = (char *)malloc(sizeof(char) * 2 * N);
+	T = (char *)malloc(sizeof(char) * (N + M));
 	for (i = 0; i < N_REPEAT; i++) {
 		start = GetTime(); // start the timer
 		WagnerFischer(); // generate the transformation cost table
@@ -147,7 +147,7 @@ void WagnerFischer(void) // generate the transformation cost table
 void Trace(void) // trace the transformation sequence
 {
 	int i = N; // loop index
-	int j = N; // loop index
+	int j = M; // loop index
 
 	n_change = 0; // number of delete, insert and change
 	idx_T = 0; // index for the operation sequence (reversed)
