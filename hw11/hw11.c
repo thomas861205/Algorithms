@@ -13,7 +13,6 @@
 
 // data structure to store the line information
 typedef struct line {
-	int nth; // nth line
 	int len; // number of bytes in the line
 	char *txt; // line text
 	struct line *next;
@@ -81,7 +80,6 @@ LINE *readFile(char const *fname, int *n) // read paragraph line-by-line
 				tmp[idx] = '\0';
 				n_line++; // number of lines increase by 1
 				new_node = (LINE *)malloc(sizeof(LINE));
-				new_node->nth = n_line; // the nth line
 				n_char = strlen(tmp); // line length
 				new_node->len = n_char;
 				new_node->txt = (char *)malloc(sizeof(char) * (n_char + 1));
@@ -121,11 +119,9 @@ void WagnerFischer(void) // generate the transformation cost table
 		cost[0][i] = cost[0][i - 1] + I;
 	}
 	p = P1;
-	while (p != NULL) {
+	for (i = 1; i <= N; i++) {
 		q = P2;
-		while (q != NULL) {
-			i = p->nth; j = q->nth;
-			// if two lines are identical
+		for (j = 1; j <= M; j++) {
 			if ((p->len == q->len) && !strcmp(p->txt, q->txt)) {
 				cost[i][j] = cost[i - 1][j - 1];
 			}
@@ -242,11 +238,11 @@ void freeAll(void) // free allocated memory
 	free(T);
 }
 
-double GetTime(void)						// get local time in seconds
+double GetTime(void) // get local time in seconds
 {
-	struct timeval tv;						// variable to store time
+	struct timeval tv; // variable to store time
 
-	gettimeofday(&tv, NULL);				// get local time
+	gettimeofday(&tv, NULL); // get local time
 
-	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+	return tv.tv_sec + 1e-6 * tv.tv_usec; // return local time in seconds
 }
