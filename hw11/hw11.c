@@ -1,16 +1,21 @@
+// EE3980 HW11 Transforming Text Files
+// 105061110, 周柏宇
+// 2020/05/31
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #define N_REPEAT 500 // number of repetitions
 #define D 1 // delete cost
 #define I 1 // insert cost
 #define C 2 // change cost
 
-// data structure to store the line information, remember to memtion
+// data structure to store the line information
 typedef struct line {
 	int nth; // nth line
 	int len; // number of bytes in the line
-	char *txt; // the line
+	char *txt; // line text
 	struct line *next;
 } LINE;
 
@@ -33,7 +38,7 @@ int main(int argc, char const *argv[])
 {
 	// expect the command line to be: ./a.out filename1 filename2
 	int i; // loop index
-	double start, end; // timestamp
+	double start, end; // timestamps
 	double sum_t = 0; // cumulated time
 
 	P1 = readFile(argv[1], &N); // read first paragraph
@@ -59,36 +64,42 @@ int main(int argc, char const *argv[])
 LINE *readFile(char const *fname, int *n) // read paragraph line-by-line
 {
 	FILE *fp; // file object
-	char *line_buff = NULL; // buffer to store the line
-	int buf_len = 0; // length of the buffer
+	char c; // temporary char
+	char tmp[1000]; // line buffer
+	int idx = 0; // index
+	int n_char; // number of chars
 	int n_line = 0; // number of lines
-	int n_char; // number of bytes
 	LINE *head = NULL; // first line
 	LINE *new_node;
 	LINE *tail; // last line
 
 	fp = fopen(fname, "r"); // open the text file
 	if (fp != NULL) {
-		while ((n_char = getline(&line_buff, &buf_len, fp)) != -1) {
-			n_line++; // number of lines increases by 1
-			new_node = (LINE *)malloc(sizeof(LINE));
-			new_node->nth = n_line; // the nth line
-			new_node->len = n_char; // line length
-			new_node->txt = (char *)malloc(sizeof(char) * (n_char + 1));
-			strcpy(new_node->txt, line_buff); // line texts
-			new_node->next = NULL;
-			if (head == NULL) { // first line
-				head = new_node;
+		while ((c = fgetc(fp)) != EOF) { // read every character of the file
+			tmp[idx++] = c; // store the char
+			if (c == '\n') { // end of the line
+				tmp[idx] = '\0';
+				n_line++; // number of lines increase by 1
+				new_node = (LINE *)malloc(sizeof(LINE));
+				new_node->nth = n_line; // the nth line
+				n_char = strlen(tmp); // line length
+				new_node->len = n_char;
+				new_node->txt = (char *)malloc(sizeof(char) * (n_char + 1));
+				strcpy(new_node->txt, tmp);
+				new_node->next = NULL;
+				if (head == NULL) { // first line
+					head = new_node;
+				}
+				else {
+					tail->next = new_node; // connect it to last line
+				}
+				tail = new_node;
+				idx = 0;
 			}
-			else {
-				tail->next = new_node; // connect it to last line
-			}
-			tail = new_node; // update last line
 		}
 		*n = n_line; // number of lines for this paragraph
-		free(line_buff);
 		fclose(fp); // close the file
-		return head; // return the paragraph
+		return head; // return the link list of lines
 	}
 	else {
 		*n = -1; // file open failed
@@ -136,8 +147,6 @@ void Trace(void) // trace the transformation sequence
 {
 	int i = N; // loop index
 	int j = N; // loop index
-	LINE *p = P1; // paragraph 1
-	LINE *q = P2; // paragraph 2
 
 	n_change = 0; // number of delete, insert and change
 	idx_T = 0; // index for the operation sequence (reversed)
