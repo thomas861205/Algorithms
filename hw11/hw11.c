@@ -114,7 +114,7 @@ void WagnerFischer(void) // generate the transformation cost table
 
 	// initialize the cost table
 	cost[0][0] = 0;
-	for (i = 1; i <=N; i++) {
+	for (i = 1; i <= N; i++) {
 		cost[i][0] = cost[i - 1][0] + D;
 		cost[0][i] = cost[0][i - 1] + I;
 	}
