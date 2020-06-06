@@ -31,7 +31,8 @@ int RowCf(int **cost, int *min);
 int ColCf(int **cost, int *min);
 void array2heap(NODE *A, int n);
 void heapify(NODE *A, int i, int n);
-int next(NODE *A, int n, NODE *ret);
+int nextH(NODE *A, int n, NODE *ret);
+int nextA(NODE *A, int n, NODE *ret);
 
 int main(void)
 {
@@ -163,9 +164,10 @@ void DFS_d(int nth, int u, int R, int **cost)
 		return;
 	}
 
-	array2heap(order, i_order); // make the array 'order' a min heap
+	// array2heap(order, i_order); // make the array 'order' a min heap
 
-	while (((status = next(order, i_order--, &min) != -1)) && (min.R <= LB)) {
+	// while (((status = nextH(order, i_order--, &min) != -1)) && (min.R <= LB)) {
+	while (((status = nextA(order, i_order--, &min) != -1)) && (min.R <= LB)) {
 		v = min.idx;
 		visited[v] = 1; // set city v as visited
 		col_avl[v] = 0; // set column v to INF
@@ -211,7 +213,7 @@ void heapify(NODE *A, int i, int n)
 	A[(j + 1) / 2 - 1] = tmp;
 }
 
-int next(NODE *A, int n, NODE *ret) // return next minimum in heap
+int nextH(NODE *A, int n, NODE *ret) // return next minimum in heap
 {
 	if (n == 1) {
 		// only one element in heap, no need to swap and heapify
@@ -225,6 +227,26 @@ int next(NODE *A, int n, NODE *ret) // return next minimum in heap
 		return 0;
 	}
 	else return -1;
+}
+
+int nextA(NODE *A, int n, NODE *ret){
+	int i;
+	int min = INF;
+	int i_min;
+
+	if (n < 0) return -1;
+	else if (n == 1) {
+		*ret = A[0];
+		return 0;
+	}
+	for (i = 0; i < n; i++) {
+		if (A[i].R < min) {
+			min = A[i].R;
+			i_min = i;
+		}
+	}
+	*ret = A[i_min]; A[i_min] = A[n - 1]; A[n - 1] = *ret;
+	return 0;
 }
 
 int RowR(int **cost, int doit)

@@ -4,21 +4,35 @@
 #include <time.h>
 #define INF 1000000
 
+typedef struct node {
+	int idx;
+	int R;
+} NODE;
+
 int N;
 char **city;
 int **cost;
 int *visited;
 int LB = INF;
 int n_step = 0;
+int *row_avl;
+int *col_avl;
+int *ans;
 
 void ReadandInit(void);
 void printCost(int **cost);
 int **copy(int **from);
 void freeCopy(int **cost);
 void DFS_Call(void);
-void DFS_d(int nth, int u, int v, int R, int **cost);
-int RowR(int **cost);
-int ColR(int **cost);
+void DFS_d(int nth, int u, int R, int **cost);
+int RowR(int **cost, int doit);
+int ColR(int **cost, int doit);
+int RowCf(int **cost, int *min);
+int ColCf(int **cost, int *min);
+void array2heap(NODE *A, int n);
+void heapify(NODE *A, int i, int n);
+int nextH(NODE *A, int n, NODE *ret);
+int nextA(NODE *A, int n, NODE *ret);
 
 int main(void)
 {
@@ -61,8 +75,12 @@ void ReadandInit(void)
 		}
 	}
 	visited = (int *)malloc(sizeof(int) * N);
+	row_avl = (int *)malloc(sizeof(int) * N);
+	col_avl = (int *)malloc(sizeof(int) * N);
 	for (i = 0; i < N; i++) {
 		visited[i] = 0;
+		row_avl[i] = 1;
+		col_avl[i] = 1;
 	}
 }
 
@@ -72,7 +90,9 @@ void printCost(int** cost)
 
 	for (i = 0; i < N; i++) {
 		for (j = 0; j < N; j++) {
-			if (cost[i][j] == INF) printf("  x ");
+			// if (cost[i][j] == INF) printf("  x ");
+			if (!row_avl[i] || !col_avl[j] || cost[i][j] == INF)
+				printf("  x ");
 			else printf("%3d ", cost[i][j]);
 		}
 		printf("\n");
@@ -95,102 +115,196 @@ int **copy(int **from)
 void DFS_Call(void)
 {
 	int i;
-	int R = 0;
+	int R;
 	int **cost_cpy;
 
 	visited[0] = 1; // node 0 has been visited
 	cost_cpy = copy(cost);
-	R += RowR(cost_cpy);
-	R += ColR(cost_cpy);
-	// printCost(cost_cpy);
+	R = RowR(cost_cpy, 1) + ColR(cost_cpy, 1);
 	n_step++;
-	// printf("%d. %d\n\n", n_step, R);
-	for (i = 1; i < N; i++) {
-		if (!visited[i]) {
-			DFS_d(1, 0, i, R, cost_cpy);
-		}
-	}
+	DFS_d(1, 0, R, cost_cpy);
 	freeCopy(cost_cpy);
 }
 
-void DFS_d(int nth, int u, int v, int R, int **cost)
+void DFS_d(int nth, int u, int R, int **cost)
 {
-	int i;
-	int r = 0;
-	int **cost_cpy;
+	int i; // loop index
+	int r; // temporary lower bound
+	int tmp; // temporary variable
+	int i_order = 0; // index
+	int **cost_cpy; // a duplicate of cost table
+	int status; // return value of next()
+	int v; // link (u, v)
+	NODE min; // next minimum
+	NODE *order = (NODE *)malloc(sizeof(NODE) * (N - nth));
 
-	// printf("(%d, %d)\n", u, v);
-	visited[v] = 1;
-	cost_cpy = copy(cost);
-	r +=  cost[u][v];
-	for (i = 0; i < N; i++) cost_cpy[u][i] = INF;
-	for (i = 0; i < N; i++) cost_cpy[i][v] = INF;
-	cost_cpy[v][u] = INF;
-	r += RowR(cost_cpy);
-	r += ColR(cost_cpy);
-	// printCost(cost_cpy);
-	n_step++;
-	// printf("%d. %d %d\n\n", n_step, LB, R + r);
+	row_avl[u] = 0; // set row u to INF
+	for (i = 0; i < N; i++) {
+		if (!visited[i]) { // try all available cities
+			col_avl[i] = 0; // set column i to INF
+			tmp = cost[i][u];
+			cost[i][u] = INF; // set cost[i][u] to INF
 
-	if (nth == N - 1) {
-		LB = R;
-		visited[v] = 0;
+			order[i_order].idx = i;
+			order[i_order].R = R + cost[u][i] + RowR(cost, 0) + ColR(cost, 0);
+			n_step++; // number of steps (calculation of lower bound) increase by 1
+			// printf("%d. %d %d\n", n_step, i + 1, order[i_order].R);
+			i_order++;
+
+			cost[i][u] = tmp; // recover cost[i][u]
+			col_avl[i] = 1; // recover column i
+		}
+	}
+	if (nth == N - 1) { // lowest non-leaf node
+		row_avl[u] = 1; // recover row u
+		tmp = order[0].R;
+		// printf("done %d %d\n", LB, tmp);
+		LB = tmp < LB ? tmp : LB; // update lower bound
+		free(order);
 		return;
 	}
-	if (R + r <= LB) {
-		for (i = 1; i < N; i++) {
-			if (!visited[i]) {
-				DFS_d(nth + 1, v, i, R + r, cost_cpy);
-			}
-		}
+
+	// array2heap(order, i_order); // make the array 'order' a min heap
+
+	// while (((status = nextH(order, i_order--, &min) != -1)) && (min.R <= LB)) {
+	while (((status = nextA(order, i_order--, &min) != -1)) && (min.R <= LB)) {
+		v = min.idx;
+		visited[v] = 1; // set city v as visited
+		col_avl[v] = 0; // set column v to INF
+		cost_cpy = copy(cost); // a duplicate of cost table
+		cost_cpy[v][u] = INF; // set cost[v][u] to INF
+
+		r = R + cost[u][v] + RowR(cost_cpy, 1) + ColR(cost_cpy, 1);
+		DFS_d(nth + 1, v, r, cost_cpy); // next city
+
+		col_avl[v] = 1; // recover col v
+		visited[v] = 0; // set city v as unvisited
+		freeCopy(cost_cpy);
 	}
-	visited[v] = 0;
-	freeCopy(cost_cpy);
+	row_avl[u] = 1; // recover row u
+	free(order);
 }
 
-int RowR(int **cost)
+void array2heap(NODE *A, int n)
+{
+	int i;
+
+	for (i = n / 2 - 1; i >= 0; i--) {
+		heapify(A, i, n);
+	}
+}
+
+void heapify(NODE *A, int i, int n)
+{
+	int j, done;
+	NODE tmp;
+
+	j = 2 * (i + 1) - 1;
+	tmp = A[i];
+	done = 0;
+	while ((j <= n - 1) && (!done)) {
+		if ((j < n - 1) && (A[j].R > A[j + 1].R)) j++;
+		if (tmp.R < A[j].R) done = 1;
+		else {
+			A[(j + 1) / 2 - 1] = A[j];
+			j = 2 * (j + 1) - 1;
+		}
+	}
+	A[(j + 1) / 2 - 1] = tmp;
+}
+
+int nextH(NODE *A, int n, NODE *ret) // return next minimum in heap
+{
+	if (n == 1) {
+		// only one element in heap, no need to swap and heapify
+		*ret = A[0];
+		return 0;
+	}
+	else if (n > 1) {
+		// more than one element, need to swap
+		*ret = A[0]; A[0] = A[n - 1]; A[n - 1] = *ret;
+		heapify(A, 0, n - 1);
+		return 0;
+	}
+	else return -1;
+}
+
+int nextA(NODE *A, int n, NODE *ret){
+	int i;
+	int min = INF;
+	int i_min;
+
+	if (n < 0) return -1;
+	else if (n == 1) {
+		*ret = A[0];
+		return 0;
+	}
+	for (i = 0; i < n; i++) {
+		if (A[i].R < min) {
+			min = A[i].R;
+			i_min = i;
+		}
+	}
+	*ret = A[i_min]; A[i_min] = A[n - 1]; A[n - 1] = *ret;
+	return 0;
+}
+
+int RowR(int **cost, int doit)
 {
 	int i, j;
 	int min;
 	int s_min = 0;
 
 	for (i = 0; i < N; i++) {
-		min = INF;
-		for (j = 0; j < N; j++) {
-			if ((cost[i][j] < min))
-				min = cost[i][j];
-		}
-		if (min != INF) {
+		if (row_avl[i]) {
+			min = INF;
 			for (j = 0; j < N; j++) {
-				if (cost[i][j] != INF) cost[i][j] -= min;
+				if (col_avl[j] && (cost[i][j] < min))
+					min = cost[i][j];
 			}
-			s_min += min;
+			if (min != INF) {
+				if (doit) {
+					for (j = 0; j < N; j++) {
+						if (col_avl[j] && cost[i][j] != INF)
+							cost[i][j] -= min;
+					}
+				}
+				s_min += min;
+			}
 		}
 	}
 	return s_min;
 }
 
-int ColR(int **cost)
+int ColR(int **cost, int doit)
 {
 	int i, j;
 	int min;
 	int s_min = 0;
 
 	for (i = 0; i < N; i++) {
-		min = INF;
-		for (j = 0; j < N; j++) {
-			if ((cost[j][i] < min))
-				min = cost[j][i];
-		}
-		if (min != INF) {
+		if (col_avl[i]) {
+			min = INF;
 			for (j = 0; j < N; j++) {
-				if (cost[j][i] != INF) cost[j][i] -= min;
+				if (row_avl[j] && (cost[j][i] < min))
+					min = cost[j][i];
 			}
-			s_min += min;
+			if (min != INF) {
+				if (doit) {
+					for (j = 0; j < N; j++) {
+						if (row_avl[j] && cost[j][i] != INF)
+							cost[j][i] -= min;
+					}
+				}
+				s_min += min;
+			}
 		}
 	}
 	return s_min;
 }
+
+// int RowCf(int **cost, int *min);
+// int ColCf(int **cost, int *min);
 
 void freeCopy(int **cost)
 {
