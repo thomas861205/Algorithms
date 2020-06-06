@@ -5,9 +5,10 @@
 #include <sys/time.h>
 #define INF 1000000
 
+// data structure to store the information of links
 typedef struct node {
-	int idx;
-	int R;
+	int idx; // index of the city
+	int R; // lower bound when adding the link
 } NODE;
 
 int N; // number of cities
@@ -15,22 +16,21 @@ char **city; // name of the cities
 int **cost; // cost table
 int *visited; // record if the city is visited
 int LB = INF; // lower bound of the cost
-int n_step = 0;
-int *row_avl;
-int *col_avl;
-int *ans;
-int *ans_tmp;
+int n_step = 0; // number of steps (calculation of lower bound)
+int *row_avl; // record if the row is available
+int *col_avl; // record if the column is available
+int *ans; // visiting order
+int *ans_tmp; // temporary visiting order
 
-void ReadandInit(void);
-void printCost(int **cost);
-int **copy(int **from);
-void freeCopy(int **cost);
+void ReadandInit(void); // read input and initialize
+int **copy(int **from); // copy the cost table
+void freeCopy(int **cost); // free duplicate of cost table
 void DFS_Call(void);
 void DFS_d(int nth, int u, int R, int **cost);
-int RowR(int **cost, int doit);
-int ColR(int **cost, int doit);
+int RowR(int **cost, int doit); // reduce row cost
+int ColR(int **cost, int doit); // reduce column cost
 int nextA(NODE *A, int n, NODE *ret);
-void freeAll(void);
+void freeAll(void); // free allocated memory
 
 int main(void)
 {
@@ -48,6 +48,7 @@ int main(void)
 		printf(" %s -> %s\n", city[ans[i]], city[ans[(i + 1) % N]]);
 	}
 	printf("Total travelling distance: %d\n", LB);
+	freeAll();
 	return 0;
 }
 
@@ -88,20 +89,6 @@ void ReadandInit(void)
 	}
 }
 
-void printCost(int** cost)
-{
-	int i, j;
-
-	for (i = 0; i < N; i++) {
-		for (j = 0; j < N; j++) {
-			if (!row_avl[i] || !col_avl[j] || cost[i][j] == INF)
-				printf("  x ");
-			else printf("%3d ", cost[i][j]);
-		}
-		printf("\n");
-	}
-}
-
 int **copy(int **from)
 {
 	int i, j;
@@ -117,7 +104,6 @@ int **copy(int **from)
 
 void DFS_Call(void)
 {
-	int i;
 	int R;
 	int **cost_cpy;
 
@@ -134,46 +120,43 @@ void DFS_d(int nth, int u, int R, int **cost)
 	int i; // loop index
 	int r; // temporary lower bound
 	int tmp; // temporary variable
-	int i_order = 0; // index
+	int i_adj = 0; // index
 	int **cost_cpy; // a duplicate of cost table
 	int status; // return value of next()
 	int v; // link (u, v)
 	NODE min; // next minimum
-	NODE *order = (NODE *)malloc(sizeof(NODE) * (N - nth));
+	NODE *adj = (NODE *)malloc(sizeof(NODE) * (N - nth)); // adjacent cities
 
 	row_avl[u] = 0; // set row u to INF
 	ans_tmp[nth - 1] = u;
 	for (i = 0; i < N; i++) {
-		if (!visited[i]) { // try all available cities
+		if (!visited[i]) { // try unvisited cities
 			col_avl[i] = 0; // set column i to INF
 			tmp = cost[i][u];
 			cost[i][u] = INF; // set cost[i][u] to INF
-
-			order[i_order].idx = i;
+			adj[i_adj].idx = i;
 			// calculate the lower bound
-			order[i_order].R = R + cost[u][i] + RowR(cost, 0) + ColR(cost, 0);
+			adj[i_adj].R = R + cost[u][i] + RowR(cost, 0) + ColR(cost, 0);
+			i_adj++;
 			// number of steps (calculation of lower bound) increase by 1
 			n_step++;
-			// printf("%d. %d %d\n", n_step, i + 1, order[i_order].R);
-			i_order++;
-
 			cost[i][u] = tmp; // recover cost[i][u]
 			col_avl[i] = 1; // recover column i
 		}
 	}
 	if (nth == N - 1) { // lowest non-leaf node
-		ans_tmp[nth] = order[0].idx;
+		ans_tmp[nth] = adj[0].idx;
 		row_avl[u] = 1; // recover row u
-		tmp = order[0].R;
+		tmp = adj[0].R;
 		if (tmp < LB) {
 			LB = tmp; // update lower bound
 			for (i = 0; i < N; i++) ans[i] = ans_tmp[i];
 		}
-		free(order);
+		free(adj);
 		return;
 	}
 	// try next city according to least-cost, stop when dominated
-	while (((status = nextA(order, i_order--, &min) != -1)) && (min.R <= LB)) {
+	while (((status = nextA(adj, i_adj--, &min) != -1)) && (min.R <= LB)) {
 		v = min.idx;
 		visited[v] = 1; // set city v as visited
 		col_avl[v] = 0; // set column v to INF
@@ -188,10 +171,11 @@ void DFS_d(int nth, int u, int R, int **cost)
 		freeCopy(cost_cpy);
 	}
 	row_avl[u] = 1; // recover row u
-	free(order);
+	free(adj);
 }
 
-int nextA(NODE *A, int n, NODE *ret){
+int nextA(NODE *A, int n, NODE *ret)
+{
 	int i;
 	int min = INF;
 	int i_min;
@@ -211,7 +195,7 @@ int nextA(NODE *A, int n, NODE *ret){
 	return 0;
 }
 
-int RowR(int **cost, int doit)
+int RowR(int **cost, int doit) // reduce row cost
 {
 	int i, j; // loop indices
 	int min; // minimum of the row
@@ -240,7 +224,7 @@ int RowR(int **cost, int doit)
 	return s_min;
 }
 
-int ColR(int **cost, int doit)
+int ColR(int **cost, int doit) // reduce column cost
 {
 	int i, j; // loop indices
 	int min; // minimum of the column
@@ -275,4 +259,21 @@ void freeCopy(int **cost) // free duplicate of cost table
 
 	for (i = 0; i < N; i++) free(cost[i]);
 	free(cost);
+}
+
+void freeAll(void) // free allocated memory
+{
+	int i;
+
+	for (i = 0; i < N; i++) {
+		free(city[i]);
+		free(cost[i]);
+	}
+	free(city);
+	free(cost);
+	free(visited);
+	free(row_avl);
+	free(col_avl);
+	free(ans);
+	free(ans_tmp);
 }
