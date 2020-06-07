@@ -1,3 +1,7 @@
+// EE3980 HW12 Travelling Salesperson Problem
+// 105061110, 周柏宇
+// 2020/06/07
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,10 +31,10 @@ int **copy(int **from); // copy the cost table
 void freeCopy(int **cost); // free duplicate of cost table
 void DFS_Call(void);
 void DFS_d(int nth, int u, int R, int **cost);
-int RowR(int **cost, int doit); // reduce row cost
-int ColR(int **cost, int doit); // reduce column cost
+int RowR(int **cost, int doit);
+int ColR(int **cost, int doit);
 int nextA(NODE *A, int n, NODE *ret);
-void freeAll(void); // free allocated memory
+void freeAll(void);
 
 int main(void)
 {
@@ -120,43 +124,46 @@ void DFS_d(int nth, int u, int R, int **cost)
 	int i; // loop index
 	int r; // temporary lower bound
 	int tmp; // temporary variable
-	int i_adj = 0; // index
+	int i_order = 0; // index
 	int **cost_cpy; // a duplicate of cost table
 	int status; // return value of next()
 	int v; // link (u, v)
 	NODE min; // next minimum
-	NODE *adj = (NODE *)malloc(sizeof(NODE) * (N - nth)); // adjacent cities
+	NODE *order = (NODE *)malloc(sizeof(NODE) * (N - nth));
 
 	row_avl[u] = 0; // set row u to INF
 	ans_tmp[nth - 1] = u;
 	for (i = 0; i < N; i++) {
-		if (!visited[i]) { // try unvisited cities
+		if (!visited[i]) { // try all available cities
 			col_avl[i] = 0; // set column i to INF
 			tmp = cost[i][u];
 			cost[i][u] = INF; // set cost[i][u] to INF
-			adj[i_adj].idx = i;
+
+			order[i_order].idx = i;
 			// calculate the lower bound
-			adj[i_adj].R = R + cost[u][i] + RowR(cost, 0) + ColR(cost, 0);
-			i_adj++;
+			order[i_order].R = R + cost[u][i] + RowR(cost, 0) + ColR(cost, 0);
 			// number of steps (calculation of lower bound) increase by 1
 			n_step++;
+			// printf("%d. %d %d\n", n_step, i + 1, order[i_order].R);
+			i_order++;
+
 			cost[i][u] = tmp; // recover cost[i][u]
 			col_avl[i] = 1; // recover column i
 		}
 	}
 	if (nth == N - 1) { // lowest non-leaf node
-		ans_tmp[nth] = adj[0].idx;
+		ans_tmp[nth] = order[0].idx;
 		row_avl[u] = 1; // recover row u
-		tmp = adj[0].R;
+		tmp = order[0].R;
 		if (tmp < LB) {
 			LB = tmp; // update lower bound
 			for (i = 0; i < N; i++) ans[i] = ans_tmp[i];
 		}
-		free(adj);
+		free(order);
 		return;
 	}
 	// try next city according to least-cost, stop when dominated
-	while (((status = nextA(adj, i_adj--, &min) != -1)) && (min.R <= LB)) {
+	while (((status = nextA(order, i_order--, &min) != -1)) && (min.R <= LB)) {
 		v = min.idx;
 		visited[v] = 1; // set city v as visited
 		col_avl[v] = 0; // set column v to INF
@@ -171,11 +178,10 @@ void DFS_d(int nth, int u, int R, int **cost)
 		freeCopy(cost_cpy);
 	}
 	row_avl[u] = 1; // recover row u
-	free(adj);
+	free(order);
 }
 
-int nextA(NODE *A, int n, NODE *ret)
-{
+int nextA(NODE *A, int n, NODE *ret){
 	int i;
 	int min = INF;
 	int i_min;
@@ -195,7 +201,7 @@ int nextA(NODE *A, int n, NODE *ret)
 	return 0;
 }
 
-int RowR(int **cost, int doit) // reduce row cost
+int RowR(int **cost, int doit)
 {
 	int i, j; // loop indices
 	int min; // minimum of the row
@@ -224,7 +230,7 @@ int RowR(int **cost, int doit) // reduce row cost
 	return s_min;
 }
 
-int ColR(int **cost, int doit) // reduce column cost
+int ColR(int **cost, int doit)
 {
 	int i, j; // loop indices
 	int min; // minimum of the column
@@ -261,7 +267,7 @@ void freeCopy(int **cost) // free duplicate of cost table
 	free(cost);
 }
 
-void freeAll(void) // free allocated memory
+void freeAll(void)
 {
 	int i;
 
