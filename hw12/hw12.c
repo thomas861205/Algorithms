@@ -28,8 +28,8 @@ int *ans_tmp; // temporary visiting order
 void ReadandInit(void); // read input and initialize
 int **copy(int **from); // copy the cost table
 void freeCopy(int **cost); // free duplicate of cost table
-void LC_Call(void); // initialization call of least cost traversal
-void LC_d(int nth, int u, int R, int **cost); // recursive least cost traversal
+void LC_Call(void); // initialization call of least-cost search
+void LC_d(int nth, int u, int R, int **cost); // recursive least-cost search
 int RowR(int **cost, int doit); // row reduce
 int ColR(int **cost, int doit); // column reduce
 int nextA(NODE *A, int n, NODE *ret); // next minimum of the array
@@ -43,7 +43,7 @@ int main(void)
 
 	ReadandInit(); // read input and initialize
 	start = GetTime(); // start the timer
-	LC_Call(); // initialization call of the least cost traversal
+	LC_Call(); // initialization call of the least-cost search
 	end = GetTime(); // stop the timer
 	// printf("%d steps\n", n_step);
 	// printf("%.5lfs\n", (end - start));
@@ -114,7 +114,7 @@ void freeCopy(int **cost) // free duplicate of cost table
 	free(cost);
 }
 
-void LC_Call(void) // initialization call of least cost traversal
+void LC_Call(void) // initialization call of least-cost search
 {
 	int R; // temporary lower bound
 	int **cost_cpy; // a duplicate of cost table
@@ -123,11 +123,11 @@ void LC_Call(void) // initialization call of least cost traversal
 	cost_cpy = copy(cost); // a duplicate of cost table
 	R = RowR(cost_cpy, 1) + ColR(cost_cpy, 1); // row and column reduce
 	n_step++; // number of steps (calculation of lower bound) increase by 1
-	LC_d(1, 0, R, cost_cpy); // recursive least cost traversal
+	LC_d(1, 0, R, cost_cpy); // recursive least-cost search
 	freeCopy(cost_cpy); // free allocated memory
 }
 
-void LC_d(int nth, int u, int R, int **cost) // recursive least cost traversal
+void LC_d(int nth, int u, int R, int **cost) // recursive least-cost search
 {
 	int i; // loop index
 	int r; // temporary lower bound
@@ -197,7 +197,7 @@ int nextA(NODE *A, int n, NODE *ret) // next minimum of the array
 	int min = INF; // minimum
 	int i_min; // index of the minimum
 
-	if (n < 0) return -1; //fail to return
+	if (n <= 0) return -1; //fail to return
 	else if (n == 1) { // only one element, no need to move
 		*ret = A[0];
 		return 0;
