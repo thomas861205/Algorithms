@@ -1,0 +1,67 @@
+Unicode Version 10.0
+Unicode 10.0 is the version of the Unicode Standard released on
+June 20, 2017. 8,518 new characters were included with this update,
+of which 56 were emoji characters.
+
+Only new emoji code points are listed on this page. For the full 2017
+emoji list; see Emoji 5.0 which included all 239 emoji additions
+including sequences for skin tone and gender.
+
+😃 Emoji 5.0 list
+🔣 Unicode 10.0.0 Specification
+🤩 Star-Struck
+🤪 Zany Face
+🤭 Face with Hand Over Mouth
+🤫 Shushing Face
+🤨 Face with Raised Eyebrow
+🤮 Face Vomiting
+🤯 Exploding Head
+🧐 Face with Monocle
+🤬 Face with Symbols on Mouth
+🧡 Orange Heart
+🤟 Love-You Gesture
+🤲 Palms Up Together
+🧠 Brain
+🧒 Child
+🧑 Person
+🧔 Man: Beard
+🧓 Older Person
+🧕 Woman with Headscarf
+🧙 Mage
+🧚 Fairy
+🧛 Vampire
+🧜 Merperson
+🧝 Elf
+🧞 Genie
+🧟 Zombie
+🧖 Person in Steamy Room
+🧗 Person Climbing
+🧘 Person in Lotus Position
+🦓 Zebra
+🦒 Giraffe
+🦔 Hedgehog
+🦕 Sauropod
+🦖 T-Rex
+🦗 Cricket
+🥥 Coconut
+🥦 Broccoli
+🥨 Pretzel
+🥩 Cut of Meat
+🥪 Sandwich
+🥣 Bowl with Spoon
+🥫 Canned Food
+🥟 Dumpling
+🥠 Fortune Cookie
+🥡 Takeout Box
+🥧 Pie
+🥤 Cup with Straw
+🥢 Chopsticks
+🛸 Flying Saucer
+🛷 Sled
+🥌 Curling Stone
+🧣 Scarf
+🧤 Gloves
+🧥 Coat
+🧦 Socks
+🧢 Billed Cap
+₿ Bitcoin Sign
