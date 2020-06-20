@@ -1,159 +1,117 @@
+// EE3980 Term Project Encoding utf-8 Files
+// 105061110, 周柏宇
+// 2020/06/20
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #define b2B(x) (x % 8 ? x / 8 + 1 : x / 8) // convert bits to bytes needed
-#define N_BUCKET 1000
+#define N_BUCKET 1000 // number of buckets
 
 typedef struct node {
-	unsigned int val; // character
+	unsigned int val; // symbol hash value
 	int freq; // frequency
 	char *symbol; // utf-8 symbol
 	struct node *l; // left child
 	struct node *r; // right child
 } NODE;
 
-int n_1B = 0; // # 1-byte symbols
-int n_2B = 0; // # 2-byte symbols
-int n_3B = 0; // # 3-byte symbols
-int n_4B = 0; // # 4-byte symbols
-int n_tt = 0; // total number of symbols
 int n_byte = 0; // # bytes using utf-8
 int n_bit = 0; // # bits using Huffman code
 int n_usymb = 0; // # unique symbols
-int *code;
-NODE *bucket[N_BUCKET];
-NODE **minHeap;
+int *code; // array for Huffman codes
+NODE *bucket[N_BUCKET]; // hash table
+NODE **minHeap; // min heap
 
-double GetTime(void); // get local time in seconds
-void readText(void);
-void char2binary(char ch);
-int det_nB(char ch); // determine n-byte char
-unsigned int hash2(char *str); // unsigned int: 4 bytes
-NODE *find(unsigned int val);
+void readText(void); // read utf-8 encoded paragraph
+int det_nB(char ch); // determine n-byte symbol
+unsigned int hash(char *str); // hash function
+NODE *find(unsigned int val); // find the node with certain value
 void insert(unsigned int val, char *symbol, int n_B);
-
-void hash2minHeap(NODE **bucket, int n_usymb);
-void minHeapify(NODE **list, int i, int n);
+                                   // insert a new symbol to proper linked list
+void hash2minHeap(NODE **bucket, int n_usymb); // transfer nodes to a min heap
+void minHeapify(NODE **list, int i, int n); // enforce min heap property
 NODE *minHeapRemoveMin(NODE **list, int n); // remove minimum from the min heap
 void minHeapInsertion(NODE **list, int n, NODE *new_node);
-void Tree(int n_heap);
+                                                   // insert a node to min heap
+void Tree(int n_heap); // construct the merged tree for Huffman code
 void printHuffmanCode(NODE *node, int i, int bit); // print Huffman code
+double GetTime(void); // get local time in seconds
 
 int main(void)
 {
 	int i;
-	int cnt;
-	double t0, t1;
-	NODE *tmp;
-	int clone;
+	double t0, t1; // timestamps
 
+	t0 = GetTime();
 	for (i = 0; i < N_BUCKET; i++) bucket[i] = NULL;
-	readText();
-	// for (i = 0; i < N_BUCKET; i++) {
-	// 	tmp = bucket[i];
-	// 	if (tmp) printf("%s\n", tmp->symbol);
-	// }
-	hash2minHeap(bucket, n_usymb);
-	// clone = n_usymb;
-	// while (clone) {
-	// 	tmp = minHeapRemoveMin(minHeap, clone--);
-	// 	printf("%d\n", tmp->freq);
-	// }
-	Tree(n_usymb);
+	readText(); // read utf-8 encoded paragraph
+	hash2minHeap(bucket, n_usymb); // transfer nodes to a min heap
+	Tree(n_usymb); // construct the merged tree for Huffman code
 	printHuffmanCode(minHeap[0], 0, -1); // print Huffman code
 	printf("Number of Chars read: %d\n", n_byte);
-	printf("# unique symbol: %d\n", n_usymb);
 	printf("  Huffman Coding needs %d bits, %d bytes\n", n_bit, b2B(n_bit));
 	// print the ratio of bytes needed with and without using Huffman code
 	printf("  Ratio = %.4f %%\n", b2B(n_bit) * 100.0 / n_byte);
-	// printf("%.5fs\n", t1 - t0);
+	t1 = GetTime();
+	// printf("  CPU time = %.5e seconds\n", t1 - t0);
 	return 0;
 }
 
-void readText(void)
+void readText(void) // read utf-8 encoded paragraph
 {
 	char ch;
-	char symbol[5];
-	int idx_ch = 0;
+	char symbol[5]; // utf-8 symbol
+	int idx_ch;
 	int type; // 0, 1, 2, 3, 4-byte symbol
 	unsigned long val; // hash value
 	NODE *tmp;
 
 	symbol[0] = '\0';
-	type = 4;
 	while ((ch = getchar()) != EOF) {
 		n_byte++;
-		if (n_byte % type == 0) {
-			symbol[type] = '\0';
-			val = hash2(symbol);
-			tmp = find(val);
-			if (tmp == NULL) {
-				insert(val, symbol, type);
-				n_usymb++; // number of nodes increase by 1
+		type = det_nB(ch); // determine n-byte symbol
+		if (type) { // skip 10xx xxxx
+			if (symbol[0] != '\0') {
+				val = hash(symbol);
+				tmp = find(val); // find the node with the hash value
+				if (tmp == NULL) { // not found
+					insert(val, symbol, type);
+					n_usymb++; // number of unique symbols increases by 1
+				}
+				else tmp->freq++;
 			}
-			else tmp->freq++;
 			idx_ch = 0;
+			symbol[type] = '\0';
 		}
 		symbol[idx_ch++] = ch;
 	}
-	symbol[idx_ch] = '\0';
-	val = hash2(symbol);
-	tmp = find(val);
-	if (tmp == NULL) {
+	val = hash(symbol);
+	tmp = find(val); // find the node with the hash value
+	if (tmp == NULL) { // not found
 		insert(val, symbol, type);
-		n_usymb++; // number of nodes increase by one
+		n_usymb++; // number of unique symbols increases by 1
 	}
 	else tmp->freq++;
-
-	// printf("\nTotal: %d bytes\n", n_byte);
-	// printf("1-byte symbol: %d\n", n_1B);
-	// printf("2-byte symbol: %d\n", n_2B);
-	// printf("3-byte symbol: %d\n", n_3B);
-	// printf("4-byte symbol: %d\n", n_4B);
-	// n_tt = n_1B + n_2B + n_3B + n_4B;
-	// printf("# symbol: %d\n", n_tt);
-	// printf("# unique symbol: %d\n", n_usymb);
 }
 
-void char2binary(char ch)
+int det_nB(char ch) // determine n-byte symbol
 {
-	int i;
-
-	for (i = 0; i < 8; i++) {
-		printf("%d", !!((ch << i) & 0x80)); // 0x80 = 1000 0000
-	}
-	printf(" ");
-	// printf("\n");
-}
-
-int det_nB(char ch) // determine n-byte char
-{
-	if (!(ch & 0x80)) { // 0xxx xxxx
-		n_1B++; return 1;
-	}
-	else { // 1xxx xxxx
-		if (!(ch & 0x40)) { // 10xx xxxx
-			return 0;
-		}
-		else { // 11xx xxxx
-			if (!(ch & 0x20)) { // 110x xxxx
-				n_2B++; return 2;
-			}
-			else { // 111x xxxx
-				if (!(ch & 0x10)) { // 1110 xxxx
-					n_3B++; return 3;
-				}
-				else { // 1111 xxxx
-					n_4B++; return 4;
-				}
+	if (!(ch & 0x80)) return 1;             // 0xxx xxxx
+	else {                                  // 1xxx xxxx
+		if (!(ch & 0x40)) return 0;         // 10xx xxxx
+		else {                              // 11xx xxxx
+			if (!(ch & 0x20)) return 2;     // 110x xxxx
+			else {                          // 111x xxxx
+				if (!(ch & 0x10)) return 3; // 1110 xxxx
+				else return 4;              // 1111 xxxx
 			}
 		}
 	}
 }
 
-unsigned int hash2(char *str) // unsigned int: 4 bytes
+unsigned int hash(char *str) // hash function
 {
 	unsigned int hash = 0;
 	unsigned char c;
@@ -165,7 +123,7 @@ unsigned int hash2(char *str) // unsigned int: 4 bytes
 	return hash;
 }
 
-NODE *find(unsigned int val)
+NODE *find(unsigned int val) // find the node with certain value
 {
 	NODE *tmp = bucket[val % N_BUCKET];
 
@@ -176,9 +134,10 @@ NODE *find(unsigned int val)
 	return NULL;
 }
 
+// insert a new symbol to proper linked list
 void insert(unsigned int val, char *symbol, int n_B)
 {
-	int rep = val % N_BUCKET; // representative
+	int rep = val % N_BUCKET; // representative of the class
 	NODE *new_node = (NODE *)malloc(sizeof(NODE));
 
 	new_node->val = val;
@@ -195,13 +154,14 @@ void insert(unsigned int val, char *symbol, int n_B)
 	}
 }
 
-void hash2minHeap(NODE **bucket, int n_usymb)
+void hash2minHeap(NODE **bucket, int n_usymb) // transfer nodes to a min heap
 {
 	int i;
 	int j = 0;
 	NODE *tmp;
 
 	minHeap = (NODE **)malloc(sizeof(NODE *) * n_usymb);
+	// move the nodes from linked lists to array
 	for (i = 0; i < N_BUCKET; i++) {
 		tmp = bucket[i];
 		while (tmp != NULL) {
@@ -209,8 +169,8 @@ void hash2minHeap(NODE **bucket, int n_usymb)
 			tmp = tmp->l;
 		}
 	}
-	for (i = n_usymb / 2 - 1; i >= 0; i--)
-		minHeapify(minHeap, i, n_usymb);
+	// make the array a min heap
+	for (i = n_usymb / 2 - 1; i >= 0; i--) minHeapify(minHeap, i, n_usymb);
 }
 
 void minHeapify(NODE **list, int i, int n) // enforce min heap property
@@ -280,7 +240,6 @@ void Tree(int n_heap) // construct the merged tree for Huffman code
 void printHuffmanCode(NODE *node, int i, int bit) // print Huffman code
 {
 	int j; // index
-	int k;
 
 	if (bit == -1) { // initial call
 		code = (int *)malloc(sizeof(int) * (n_usymb - 1)); // allocate memory
@@ -290,14 +249,10 @@ void printHuffmanCode(NODE *node, int i, int bit) // print Huffman code
 
 	if (node->val != 0) { // leaf nodes
 		// print symbol
-		k = 0;
-		while (node->symbol[k]) {
-			// char2binary(node->symbol[k]);
-			printf("0x%x ", node->symbol[k] & 0xff);
-			k++;
-		}
-		printf(": ");
-		// print the code for the char
+		if (node->val == 32) printf("0x20: "); // space symbol
+		else if (node->val == 10) printf("0x0D: "); // \n symbol
+		else printf("%s: ", node->symbol);
+		// print the code for the symbol
 		for (j = 0; j < i; j++) printf("%d", code[j]);
 		printf("\n");
 		n_bit += node->freq * i; // accumulate number of bits needed
@@ -308,5 +263,11 @@ void printHuffmanCode(NODE *node, int i, int bit) // print Huffman code
 	}
 }
 
-/*
-*/
+double GetTime(void)						// get local time in seconds
+{
+	struct timeval tv;						// variable to store time
+
+	gettimeofday(&tv, NULL);				// get local time
+
+	return tv.tv_sec + 1e-6 * tv.tv_usec;	// return local time in seconds
+}
