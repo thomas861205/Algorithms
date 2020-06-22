@@ -198,7 +198,7 @@ int g_BU(int n, int D, int s) // calculate g using bottom-up DP
 			min = g[i - 1][j];
 			for (k = 1; k <= (j / g_C[i]); k++) { // try possible # coins
 				tmp = k + g[i - 1][j - k * g_C[i]];
-				if (tmp < min) min = tmp; // udpate the minimum
+				if (tmp < min) min = tmp; // update the minimum
 			}
 			g[i][j] = min; // save minimum in table
 		}
