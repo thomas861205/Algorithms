@@ -197,7 +197,7 @@ int nextA(NODE *A, int n, NODE *ret) // next minimum of the array
 	int min = INF; // minimum
 	int i_min; // index of the minimum
 
-	if (n <= 0) return -1; //fail to return
+	if (n <= 0) return -1; // fail to return
 	else if (n == 1) { // only one element, no need to move
 		*ret = A[0];
 		return 0;
